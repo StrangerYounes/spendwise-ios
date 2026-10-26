@@ -1,0 +1,12 @@
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+.build/
+.swiftpm/
+screenshots/
+*.ipa
+*-simulator.zip
+.DS_Store
