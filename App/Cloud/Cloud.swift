@@ -176,6 +176,8 @@ final class Cloud {
             let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: top)
             guard let idToken = result.user.idToken?.tokenString else { return }
             let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: result.user.accessToken.tokenString)
+            await ai.signInStarting()
+            defer { ai.signInEnded() }
             user = Self.signedIn(try await Auth.auth().signIn(with: credential).user)
             watchPlan()
             sync.update()
@@ -196,6 +198,8 @@ final class Cloud {
     func signInForTest(_ name: String) async -> Bool {
         guard usingEmulators else { return false }
         let email = name.lowercased().replacingOccurrences(of: " ", with: ".") + "@example.com"
+        await ai.signInStarting()
+        defer { ai.signInEnded() }
         do {
             // The Auth emulator's accounts: made on first use, the display name standing in for Google's
             let u: User

@@ -140,9 +140,31 @@ final class AiGateway {
         }
     }
 
+    @ObservationIgnored private var accountTask: Task<Void, Error>?
+
+    /// One account check at a time, shared by everyone asking (allowances, a request).
+    private func ensureAccount() async throws {
+        if let running = accountTask { return try await running.value }
+        let task = Task { try await self.checkAccount() }
+        accountTask = task
+        defer { accountTask = nil }
+        try await task.value
+    }
+
+    @ObservationIgnored private var signingIn = false
+
+    /// Before signing in: an anonymous sign-in under way finishes first, and none starts until
+    /// [signInEnded], so none can land after (and replace) the new sign-in.
+    func signInStarting() async {
+        signingIn = true
+        _ = try? await accountTask?.value
+    }
+
+    func signInEnded() { signingIn = false }
+
     /// Makes sure there's an account whose sign-in still works: an anonymous one is replaced, a
     /// Google one has to sign in again.
-    private func ensureAccount() async throws {
+    private func checkAccount() async throws {
         let auth = Auth.auth()
         if let user = auth.currentUser {
             do {
@@ -156,6 +178,8 @@ final class AiGateway {
                 try? auth.signOut()
             }
         }
+        // A sign-in is under way: its account will do (allowances wait for the next refresh)
+        if signingIn { throw AiError(L("ai_offline"), retryable: true) }
         do {
             _ = try await auth.signInAnonymously()
         } catch {

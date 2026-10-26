@@ -1,7 +1,7 @@
 # SpendWise iOS: handoff (26 Oct 2026, written before a context compaction)
 
 ## FIRST: wait for the CI run in progress
-- Run 40293780477 failed on one error (Core public inits, fixed in commit after edeb7f2). Now wait for run **40296865295**.
+- Run 40293780477 failed on one error (Core public inits, fixed in commit after edeb7f2). Now wait for run **40306457508** (run 40296865295 built; its screenshots reviewed and fixed).
   At handoff: core job green (132 tests Linux + macOS), the ios job was in **"Build for the
   simulator (app and UI tests)"** (first build with Firebase SPM, slow).
 - Wait for it, don't poll in the foreground. Background wait, e.g.:

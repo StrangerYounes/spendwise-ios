@@ -42,7 +42,10 @@ join, remove, leave, close).
    the AI report preview reads "Looks at: spendingandprice trends". Fix: ` and ` as done
    for `each_suffix`. iOS has the spaced text (`scripts/ios-strings.json`). Same for `qa_heard`
    (`Heard: “%1$s”. ` loses its trailing space): quick add shows `Heard: “hello”.No purchases found…`.
-2. Home's search results show a fixed English "Lists" header (no string resource), also in Arabic.
+2. `AiGateway.ensureAccount()` can finish an anonymous sign-in after a Google sign-in (turning on
+   the AI starts it; signing in right away races it) and replace the Google account. iOS shares one
+   account check and makes sign-in wait for it (found by the two-phone CI test).
+3. Home's search results show a fixed English "Lists" header (no string resource), also in Arabic.
    iOS shows «القوائم» in Arabic.
 
 ## Testing

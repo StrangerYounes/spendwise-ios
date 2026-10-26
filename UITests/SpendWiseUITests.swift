@@ -124,10 +124,11 @@ final class SpendWiseUITests: XCTestCase {
     /// Insights: a category opens to the lists behind it, and a list opens.
     func testInsightsCategoryOpensItsLists() {
         let app = launch("insights")
+        XCTAssertTrue(app.staticTexts["Spending by month"].waitForExistence(timeout: 8))
+        // The breakdown is below the fold, and the screen builds rows only as they scroll in
         let category = app.buttons.matching(identifier: "categoryRow").firstMatch
-        XCTAssertTrue(category.waitForExistence(timeout: 8))
-        // The breakdown is below the fold
-        for _ in 0..<6 where !category.isHittable { app.swipeUp() }
+        for _ in 0..<8 where !(category.exists && category.isHittable) { app.swipeUp() }
+        XCTAssertTrue(category.waitForExistence(timeout: 3))
         category.tap()
         XCTAssertTrue(app.staticTexts["categoryLists"].waitForExistence(timeout: 5))
         // A list behind the category opens
