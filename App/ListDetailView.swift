@@ -670,11 +670,7 @@ struct StoreChoiceSheet: View {
             }
             .alert(L("new_store"), isPresented: $adding) {
                 TextField(L("store_name"), text: $newStore)
-                Button(L("add")) {
-                    let trimmed = newStore.trimmingCharacters(in: .whitespaces)
-                    guard !trimmed.isEmpty else { return }
-                    if let id = model.perform({ try model.repo.insertStore(Store(name: trimmed)) }) { set(id) }
-                }
+                Button(L("add"), action: addStore)
                 Button(L("cancel"), role: .cancel) {}
             }
         }
@@ -689,6 +685,13 @@ struct StoreChoiceSheet: View {
             }
         }
         .listRowBackground(Color.clear)
+    }
+
+    private func addStore() {
+        let trimmed = newStore.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        let id = model.perform { try model.repo.insertStore(Store(name: trimmed)) }
+        if let id { set(id) }
     }
 
     private func set(_ storeId: Int64?) {

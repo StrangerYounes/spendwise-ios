@@ -41,9 +41,15 @@ struct ItemInsightsView: View {
         }
         .sheet(isPresented: $renaming) {
             RenameEverywhereSheet(current: name, existing: Set(model.itemSummaries.map(\.name))) { newName in
-                if model.perform({ try model.repo.renameItemEverywhere(name, newName) }) != nil { name = newName }
+                renameEverywhere(to: newName)
             }
         }
+    }
+
+    private func renameEverywhere(to newName: String) {
+        let old = name
+        let done = model.perform { try model.repo.renameItemEverywhere(old, newName) }
+        if done != nil { name = newName }
     }
 }
 

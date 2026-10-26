@@ -22,123 +22,174 @@ struct HomeView: View {
     @State private var quickAdd: QuickAddStart?
     @FocusState private var searchFocused: Bool
 
-    var body: some View {
+    /// What the screen shows, worked out once per render (kept apart so the type checker copes).
+    private struct Shown {
+        var all: [ShoppingListWithDetails]
+        var active: [ShoppingListWithDetails]
+        var completed: [ShoppingListWithDetails]
+        var searching: Bool
+        var lists: [ShoppingListWithDetails]
+        var foundItems: [ItemSearchResult]
+        var guide: OnboardingStep?
+    }
+
+    private var shown: Shown {
         let all = model.lists
         let active = all.filter { !$0.shoppingList.isCompleted }
         let completed = all.filter { $0.shoppingList.isCompleted }
         let searching = !query.trimmingCharacters(in: .whitespaces).isEmpty
-        let matches = searching ? Set(((try? model.repo.searchShoppingLists(query)) ?? []).map(\.id)) : nil
-        let shown = (showCompleted ? completed : active).filter { matches?.contains($0.id) ?? true }
-        let foundItems = searching ? ((try? model.repo.searchItems(query)) ?? []) : []
+        let matches: Set<Int64>? = searching ? Set(((try? model.repo.searchShoppingLists(query)) ?? []).map(\.id)) : nil
+        let lists = (showCompleted ? completed : active).filter { matches?.contains($0.id) ?? true }
+        let foundItems: [ItemSearchResult] = searching ? ((try? model.repo.searchItems(query)) ?? []) : []
         let step = model.onboarding
         let guide: OnboardingStep? = (!searching && (step == .FirstList || step == .FirstItem)) ? step : nil
+        return Shown(all: all, active: active, completed: completed, searching: searching, lists: lists,
+                     foundItems: foundItems, guide: guide)
+    }
 
+    var body: some View {
+        let d = shown
+        let screen = scroll(d)
+            .scrollDismissesKeyboard(.interactively)
+            .background(Palette.surface.ignoresSafeArea())
+            .overlay(alignment: .bottomTrailing) { newListButton(d.guide) }
+            .toolbar { toolbar }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Palette.surface, for: .navigationBar)
+        return withSheets(screen)
+            .confirm($confirm)
+            .onChange(of: d.all.count) { _, _ in guideFollowsData(model.lists) }
+            .onAppear {
+                guideFollowsData(model.lists)
+                #if DEBUG
+                DemoMode.openHomeExtras(newList: $newList, quickAdd: $quickAdd, completed: $showCompleted, query: $query,
+                                        categories: $categoriesOpen, stores: $storesOpen, editing: $editing)
+                #endif
+            }
+    }
+
+    private func scroll(_ d: Shown) -> some View {
         ScrollView {
             LazyVStack(spacing: 12) {
-                MonthCard(spent: (try? model.database.spentThisMonth()) ?? 0, activeCount: active.count, currency: model.currency) {
-                    router.open(.insights)
-                }
-                if let guide {
-                    let first = guide == .FirstList
-                    GuideCard(icon: first ? "text.badge.plus" : "cart.badge.plus",
-                              title: L(first ? "guide_list_title" : "guide_open_title"),
-                              message: L(first ? "guide_list_body" : "guide_open_body"),
-                              actionLabel: L("skip_guide")) { model.setOnboarding(.Done) }
-                }
-                QuickAddPrompt(open: { quickAdd = .nothing }, record: { quickAdd = .record })
-                searchField
-                Picker("", selection: $showCompleted) {
-                    Text(L("active_count", active.count)).tag(false)
-                    Text(L("completed_count", completed.count)).tag(true)
-                }
-                .pickerStyle(.segmented)
-
-                if searching && !foundItems.isEmpty {
+                header(d)
+                if d.searching && !d.foundItems.isEmpty {
                     SectionTitle(text: L("items"))
-                    ForEach(foundItems, id: \.item.id) { result in
+                    ForEach(d.foundItems, id: \.item.id) { result in
                         ItemSearchRow(result: result, currency: model.currency) { router.open(.list(result.item.listId)) }
                     }
                     // Android shows a fixed English "Lists" here (no string resource)
                     SectionTitle(text: listsTitle)
                 }
-
-                if shown.isEmpty {
-                    if searching {
-                        EmptyState(icon: "magnifyingglass", title: L("no_matches"),
-                                   message: L(showCompleted ? "nothing_matches_completed" : "nothing_matches_active", query))
-                    } else if showCompleted {
-                        EmptyState(icon: "checkmark.circle", title: L("no_completed"), message: L("no_completed_sub"))
-                    } else if guide == nil {
-                        EmptyState(icon: "cart", title: L("no_active"), message: L("no_active_sub"))
-                    }
-                } else {
-                    ForEach(shown) { list in
-                        ListCard(item: list, currency: model.currency, color: model.color(of: list.category),
-                                 open: { router.open(.list(list.id)) },
-                                 edit: { editing = list.shoppingList },
-                                 delete: {
-                                     confirm = Confirm(title: L("delete_named_q", list.shoppingList.name), message: L("delete_list_body"), label: L("delete")) {
-                                         model.perform { try model.repo.deleteShoppingList(list.shoppingList) }
-                                     }
-                                 })
-                    }
-                }
+                listCards(d)
             }
             .padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 96)
             .readableWidth()
         }
-        .scrollDismissesKeyboard(.interactively)
-        .background(Palette.surface.ignoresSafeArea())
-        .overlay(alignment: .bottomTrailing) {
-            Button { newList = true } label: {
-                Label(L("new_list"), systemImage: "plus")
-                    .font(.labelL)
-                    .padding(.horizontal, 20).frame(height: 56)
-                    .foregroundStyle(Palette.onPrimaryContainer)
-                    .background(Palette.primaryContainer, in: RoundedRectangle(cornerRadius: 16))
-                    .shadow(color: .black.opacity(0.18), radius: 6, y: 3)
-            }
-            .pulse(guide == .FirstList)
-            .padding(16)
-            .accessibilityIdentifier("newList")
+    }
+
+    @ViewBuilder
+    private func header(_ d: Shown) -> some View {
+        MonthCard(spent: (try? model.database.spentThisMonth()) ?? 0, activeCount: d.active.count, currency: model.currency) {
+            router.open(.insights)
         }
-        .toolbar { toolbar }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Palette.surface, for: .navigationBar)
-        .sheet(isPresented: $newList) {
-            ListEditorSheet(title: L("new_list"), confirmLabel: L("create"), name: "", categoryId: nil) { name, categoryId in
-                model.advance(from: .FirstList, to: .FirstItem)
-                if let id = model.perform({ try model.repo.insertShoppingList(ShoppingList(name: name.trimmingCharacters(in: .whitespaces), categoryId: categoryId)) }) {
-                    router.open(.list(id))
+        if let guide = d.guide {
+            let first = guide == .FirstList
+            GuideCard(icon: first ? "text.badge.plus" : "cart.badge.plus",
+                      title: L(first ? "guide_list_title" : "guide_open_title"),
+                      message: L(first ? "guide_list_body" : "guide_open_body"),
+                      actionLabel: L("skip_guide")) { model.setOnboarding(.Done) }
+        }
+        QuickAddPrompt(open: { quickAdd = .nothing }, record: { quickAdd = .record })
+        searchField
+        Picker("", selection: $showCompleted) {
+            Text(L("active_count", d.active.count)).tag(false)
+            Text(L("completed_count", d.completed.count)).tag(true)
+        }
+        .pickerStyle(.segmented)
+    }
+
+    @ViewBuilder
+    private func listCards(_ d: Shown) -> some View {
+        if d.lists.isEmpty {
+            if d.searching {
+                EmptyState(icon: "magnifyingglass", title: L("no_matches"),
+                           message: L(showCompleted ? "nothing_matches_completed" : "nothing_matches_active", query))
+            } else if showCompleted {
+                EmptyState(icon: "checkmark.circle", title: L("no_completed"), message: L("no_completed_sub"))
+            } else if d.guide == nil {
+                EmptyState(icon: "cart", title: L("no_active"), message: L("no_active_sub"))
+            }
+        } else {
+            ForEach(d.lists) { list in listCard(list) }
+        }
+    }
+
+    private func listCard(_ list: ShoppingListWithDetails) -> some View {
+        ListCard(item: list, currency: model.currency, color: model.color(of: list.category),
+                 open: { router.open(.list(list.id)) },
+                 edit: { editing = list.shoppingList },
+                 delete: { askDelete(list.shoppingList) })
+    }
+
+    private func askDelete(_ list: ShoppingList) {
+        confirm = Confirm(title: L("delete_named_q", list.name), message: L("delete_list_body"), label: L("delete")) {
+            model.perform { try model.repo.deleteShoppingList(list) }
+        }
+    }
+
+    private func newListButton(_ guide: OnboardingStep?) -> some View {
+        Button { newList = true } label: {
+            Label(L("new_list"), systemImage: "plus")
+                .font(.labelL)
+                .padding(.horizontal, 20).frame(height: 56)
+                .foregroundStyle(Palette.onPrimaryContainer)
+                .background(Palette.primaryContainer, in: RoundedRectangle(cornerRadius: 16))
+                .shadow(color: .black.opacity(0.18), radius: 6, y: 3)
+        }
+        .pulse(guide == .FirstList)
+        .padding(16)
+        .accessibilityIdentifier("newList")
+    }
+
+    private func withSheets<V: View>(_ content: V) -> some View {
+        content
+            .sheet(isPresented: $newList) {
+                ListEditorSheet(title: L("new_list"), confirmLabel: L("create"), name: "", categoryId: nil) { name, categoryId in
+                    createList(name, categoryId)
                 }
             }
-        }
-        .sheet(item: $editing) { list in
-            ListEditorSheet(title: L("edit_list"), confirmLabel: L("save"), name: list.name, categoryId: list.categoryId) { name, categoryId in
-                var l = list
-                l.name = name.trimmingCharacters(in: .whitespaces)
-                l.categoryId = categoryId
-                model.perform { try model.repo.updateShoppingList(l) }
+            .sheet(item: $editing) { list in
+                ListEditorSheet(title: L("edit_list"), confirmLabel: L("save"), name: list.name, categoryId: list.categoryId) { name, categoryId in
+                    saveList(list, name, categoryId)
+                }
             }
-        }
-        .sheet(isPresented: $categoriesOpen) { CategoriesSheet() }
-        .sheet(isPresented: $storesOpen) { StoresSheet() }
-        .fullScreenCover(item: $quickAdd) { start in
-            QuickAddSheet(start: start) { count, completedAll in
-                quickAdd = nil
-                showCompleted = completedAll
-                model.show(count != 1 ? P("saved_lists", count) : L(completedAll ? "saved_to_completed" : "saved_to_active"))
-            } dismiss: { quickAdd = nil }
-        }
-        .confirm($confirm)
-        .onChange(of: all.count) { _, _ in guideFollowsData(all) }
-        .onAppear {
-            guideFollowsData(all)
-            #if DEBUG
-            DemoMode.openHomeExtras(newList: $newList, quickAdd: $quickAdd, completed: $showCompleted, query: $query,
-                                    categories: $categoriesOpen, stores: $storesOpen, editing: $editing)
-            #endif
-        }
+            .sheet(isPresented: $categoriesOpen) { CategoriesSheet() }
+            .sheet(isPresented: $storesOpen) { StoresSheet() }
+            .fullScreenCover(item: $quickAdd) { start in
+                QuickAddSheet(start: start) { count, completedAll in
+                    quickAddSaved(count, completedAll)
+                } dismiss: { quickAdd = nil }
+            }
+    }
+
+    private func createList(_ name: String, _ categoryId: Int64?) {
+        model.advance(from: .FirstList, to: .FirstItem)
+        let list = ShoppingList(name: name.trimmingCharacters(in: .whitespaces), categoryId: categoryId)
+        let id = model.perform { try model.repo.insertShoppingList(list) }
+        if let id { router.open(.list(id)) }
+    }
+
+    private func saveList(_ list: ShoppingList, _ name: String, _ categoryId: Int64?) {
+        var l = list
+        l.name = name.trimmingCharacters(in: .whitespaces)
+        l.categoryId = categoryId
+        model.perform { try model.repo.updateShoppingList(l) }
+    }
+
+    private func quickAddSaved(_ count: Int, _ completedAll: Bool) {
+        quickAdd = nil
+        showCompleted = completedAll
+        model.show(count != 1 ? P("saved_lists", count) : L(completedAll ? "saved_to_completed" : "saved_to_active"))
     }
 
     private var listsTitle: String { Lang.isArabic ? "القوائم" : "Lists" }

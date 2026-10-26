@@ -1,15 +1,15 @@
 # SpendWise iOS: handoff (26 Oct 2026, written before a context compaction)
 
 ## FIRST: wait for the CI run in progress
-- Run **40293780477** on `StrangerYounes/spendwise-ios` (first full run, pushed commit `edeb7f2`).
+- Run 40293780477 failed on one error (Core public inits, fixed in commit after edeb7f2). Now wait for run **40294724776**.
   At handoff: core job green (132 tests Linux + macOS), the ios job was in **"Build for the
   simulator (app and UI tests)"** (first build with Firebase SPM, slow).
 - Wait for it, don't poll in the foreground. Background wait, e.g.:
-  `until s=$(gh run view 40293780477 -R StrangerYounes/spendwise-ios --json jobs -q '.jobs[]|select(.name=="ios")|.steps[]|select(.name|startswith("Build for"))|.status') && [ "$s" = completed ]; do sleep 30; done`
+  `until s=$(gh run view <run-id> -R StrangerYounes/spendwise-ios --json jobs -q '.jobs[]|select(.name=="ios")|.steps[]|select(.name|startswith("Build for"))|.status') && [ "$s" = completed ]; do sleep 30; done`
   (run_in_background). Two background watchers were already running for it (bp6q842n6 for the
   build step, bhwp4kt4s = `gh run watch` writing scratchpad `run1.txt`); after compaction just
   start a fresh wait.
-- On a failed build: `gh run view 40293780477 -R StrangerYounes/spendwise-ios --log-failed | grep -E "error:" | sed 's/^.*Z //' | sort -u`,
+- On a failed build: `gh run view <run-id> -R StrangerYounes/spendwise-ios --log-failed | grep -E "error:" | sed 's/^.*Z //' | sort -u`,
   fix all errors (read `~/.claude/skills/android-to-ios/references/pitfalls.md`), commit, push
   (repo is **public** now, keep it public while iterating), watch the new run.
 - On success: download artifacts to `~/Documents/Dev/SpendWise-iOS-builds/2026-10-26-run-<id>/`
