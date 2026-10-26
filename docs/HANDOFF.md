@@ -1,31 +1,24 @@
 # SpendWise iOS: handoff (26 Oct 2026, written before a context compaction)
 
-## FIRST: wait for the CI run in progress
-- Run 40293780477 failed on one error (Core public inits, fixed in commit after edeb7f2). Now wait for run **40325996166**.
-  At handoff: core job green (132 tests Linux + macOS), the ios job was in **"Build for the
-  simulator (app and UI tests)"** (first build with Firebase SPM, slow).
-- Wait for it, don't poll in the foreground. Background wait, e.g.:
-  `until s=$(gh run view <run-id> -R StrangerYounes/spendwise-ios --json jobs -q '.jobs[]|select(.name=="ios")|.steps[]|select(.name|startswith("Build for"))|.status') && [ "$s" = completed ]; do sleep 30; done`
-  (run_in_background). Two background watchers were already running for it (bp6q842n6 for the
-  build step, bhwp4kt4s = `gh run watch` writing scratchpad `run1.txt`); after compaction just
-  start a fresh wait.
-- On a failed build: `gh run view <run-id> -R StrangerYounes/spendwise-ios --log-failed | grep -E "error:" | sed 's/^.*Z //' | sort -u`,
-  fix all errors (read `~/.claude/skills/android-to-ios/references/pitfalls.md`), commit, push
-  (repo is **public** now, keep it public while iterating), watch the new run.
-- On success: download artifacts to `~/Documents/Dev/SpendWise-iOS-builds/2026-10-26-run-<id>/`
-  (`gh run download <id> -R StrangerYounes/spendwise-ios`), make contact sheets with
-  `python3 <scratchpad>/sheets.py <dir> <out> 6 0.3 [filter]` (script in the session scratchpad;
-  recreate if gone: PIL, 6 shots per sheet at 0.3 scale, filename labels) and **Read every
-  screenshot** (EN/AR light, dark set). Check UI test results (`tests` artifact: ui-tests.log) and
-  backend test (`tests/backend-test/check.txt`, `*.json`, `emulators.log`). Fix real bugs, rerun.
-- When testing is done: `gh api -X PATCH repos/StrangerYounes/spendwise-ios -f visibility=private -q .visibility`.
+## FIRST (27 Oct): check run 40332146549, then finish
+State on 26 Oct evening: the app builds; run 6 (40325996166) passed every backend check (55/55:
+AI, allowances, receipts + note + own instructions + follow-up, reports, two-phone sync) and every
+UI test but one (Insights category, a test-scrolling problem). Run 7 (40332146549) carries that
+test fix. The repo was made **private** before the laptop slept (run 7 may still have finished).
+1. `gh run view 40332146549 -R StrangerYounes/spendwise-ios --json conclusion,jobs`. If the UI test
+   still fails: make the repo public (`-f visibility=public`), fix, push, watch, then private again.
+2. When green: `gh run download <id> -R StrangerYounes/spendwise-ios -n screenshots` into
+   `~/Documents/Dev/SpendWise-iOS-builds/2026-10-27-run-<id>/` and copy the PNGs to
+   `screenshots/<date>-run-<id>/app/` in this repo (the user asked for every CI run's shots there;
+   gitignored). Run 3 and run 4 are already there. Review new shots (contact sheets).
+3. Make sure the repo is private, then give the user the final report: what was verified (Core
+   132 tests; 12 UI flows; 55 backend checks; 120 screenshots EN/AR light + dark reviewed), what
+   was fixed along the way, Android bugs found (PLAN.md: and_separator, qa_heard spaces, the
+   anonymous sign-in race, hardcoded "Lists"), and what needs a real iPhone (docs/TESTING.md).
+   Offer to report the Android bugs/fix them in the Android repo.
 
-## Uncommitted local changes (commit + push with the next fix)
-- `App/AccountSection.swift`, `App/Cloud/Cloud.swift`: Developer section gets "Show Premium
-  screens" (debug, `plan.preview_premium`) and "Load sample data" (DemoData.load).
-- `App/Cloud/BackendTest.swift`: sync roles call `cloud.setDebugTier(.premium)` first (on the
-  emulators the plan comes from the debug switch; without it sync never starts).
-- `docs/TESTING.md` (Appetize guide, new), this file.
+## Commits
+Everything is committed and pushed.
 Commit author: `git -c user.email=younes.masri.97@gmail.com commit`, trailer
 `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Never the burner email.
 
@@ -55,5 +48,5 @@ what was seen in logs/screenshots (show some), verified vs not, then the elapsed
 - Skill updated with lessons (architecture/environment/pitfalls).
 
 ## Time
-Elapsed so far: 2 h 8 min (start 1793000416). Keep adding; end replies with
+Elapsed so far: 2 h 30 min (start 1793000416). Keep adding; end replies with
 "This response: … · Total: …".
