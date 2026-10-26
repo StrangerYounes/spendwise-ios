@@ -284,6 +284,10 @@ public struct ReceiptScan: Sendable {
     public var currency: String?
     /** What the model heard in the person's voice note. */
     public var transcript: String? = nil
+
+    public init(purchase: QuickPurchase, currency: String?, transcript: String? = nil) {
+        self.purchase = purchase; self.currency = currency; self.transcript = transcript
+    }
 }
 
 public enum ReceiptReader {

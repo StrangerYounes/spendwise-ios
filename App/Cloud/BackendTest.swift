@@ -166,6 +166,9 @@ enum BackendTest {
     private static func signedInAndSyncing(_ model: AppModel) async -> Bool {
         let cloud = model.cloud
         model.setConsent(true)
+        // On the emulators the plan comes from the debug switch (the rules check entitlements/{uid},
+        // which the test script writes)
+        cloud.setDebugTier(.premium)
         var signed = false
         for _ in 0..<3 where !signed {
             signed = await cloud.signInForTest(account)

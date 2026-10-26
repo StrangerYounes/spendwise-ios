@@ -248,6 +248,19 @@ struct DeveloperSection: View {
                 .disabled(!cloud.planSwitchable)
             }
             .padding(16)
+            Toggle(isOn: Binding(get: { cloud.previewPremium }, set: { cloud.setPreviewPremium($0) })) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Show Premium screens").font(.bodyL).foregroundStyle(Palette.onSurface)
+                    Text("This phone only, to look around. The server still decides what the AI and sync allow.")
+                        .font(.bodyS).foregroundStyle(Palette.onSurfaceVariant)
+                }
+            }
+            .tint(Palette.primary)
+            .padding(16)
+            SettingsRow(icon: "tray.and.arrow.down", title: "Load sample data", subtitle: "Four months of lists, prices and a report, added to what's here", trailing: .none) {
+                DemoData.load(model)
+                model.show("Sample data loaded")
+            }
             Toggle(isOn: Binding(get: { Cloud.emulatorsWanted }, set: { Cloud.emulatorsWanted = $0; model.show("Restart the app to switch servers") })) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Use local Firebase emulators").font(.bodyL).foregroundStyle(Palette.onSurface)

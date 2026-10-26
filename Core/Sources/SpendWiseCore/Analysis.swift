@@ -106,6 +106,10 @@ public struct ReportSection: Equatable, Sendable {
     public var heading: String
     public var body: String
     public var points: [String] = []
+
+    public init(kind: String, heading: String, body: String, points: [String] = []) {
+        self.kind = kind; self.heading = heading; self.body = body; self.points = points
+    }
 }
 
 /// What a saved report shows: the facts are computed on the phone, the rest is the AI's reading.

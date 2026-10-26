@@ -68,6 +68,22 @@ final class Cloud {
         guard Self.configured else { return }
         user = Auth.auth().currentUser.flatMap(Self.signedIn)
         tier = planSwitchable ? debugTier : (user == nil ? .free : lastTier)
+        if previewPremium { tier = .premium }
+    }
+
+    /// Debug builds: Premium's screens on this phone only (Appetize, no account); the server still
+    /// decides what the AI and sync allow.
+    var previewPremium: Bool {
+        #if DEBUG
+        return prefs.bool(forKey: "plan.preview_premium")
+        #else
+        return false
+        #endif
+    }
+
+    func setPreviewPremium(_ on: Bool) {
+        prefs.set(on, forKey: "plan.preview_premium")
+        tier = on ? .premium : (planSwitchable ? debugTier : (user == nil ? .free : lastTier))
     }
 
     func attach(_ model: AppModel) {
@@ -120,10 +136,11 @@ final class Cloud {
     func setDemoUser(_ u: SignedIn?) { user = u }
     #endif
 
-    private func setTier(_ t: Tier) {
+    private func setTier(_ server: Tier) {
+        if !planSwitchable { prefs.set(server == .premium ? "Premium" : "Free", forKey: "plan.last_tier") }
+        let t: Tier = previewPremium ? .premium : server
         guard t != tier else { return }
         tier = t
-        if !planSwitchable { prefs.set(t == .premium ? "Premium" : "Free", forKey: "plan.last_tier") }
         sync?.update()
         Task { await ai.refreshAllowances() }
     }
