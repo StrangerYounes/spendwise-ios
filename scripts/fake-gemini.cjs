@@ -29,7 +29,8 @@ globalThis.fetch = async function (url, init) {
   const parts = body.contents?.[0]?.parts ?? [];
   const prompt = parts.map((p) => p.text ?? "").join("\n");
   const props = Object.keys(body.generationConfig?.responseSchema?.properties ?? {});
-  const upper = prompt.includes("CAPITAL LETTERS");
+  // The own-instructions part may sit in another content or part than the prompt: look at it all
+  const upper = init.body.includes("CAPITAL LETTERS");
   const name = (s) => (upper ? s.toUpperCase() : s);
   console.log(`[fake-gemini] call ${calls}: ${props.join(",")} images=${parts.filter((p) => p.inlineData?.mimeType === "image/jpeg").length}`);
 

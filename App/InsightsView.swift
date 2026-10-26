@@ -285,6 +285,7 @@ private struct CategoryBreakdown: View {
                         .background(isSelected ? Color(argb: s.categoryColor).opacity(0.15) : .clear, in: RoundedRectangle(cornerRadius: 10))
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("categoryRow")
                     if isSelected {
                         CategoryLists(lists: lists.filter { $0.categoryId == s.categoryId }, color: Color(argb: s.categoryColor), currency: currency, open: openList)
                             .transition(.opacity)
@@ -316,6 +317,7 @@ private struct CategoryLists: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(P("lists_count", lists.count)).font(.labelM).foregroundStyle(Palette.onSurfaceVariant).padding(.leading, 12).padding(.vertical, 4)
+                .accessibilityIdentifier("categoryLists")
             ForEach(lists, id: \.listId) { l in
                 Button { open(l.listId) } label: {
                     HStack(spacing: 10) {

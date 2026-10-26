@@ -78,8 +78,13 @@ func P(_ key: String, _ count: Int, _ args: Any...) -> String {
 
 enum Strings {
     static func lookup(_ key: String) -> String {
-        Lang.bundle.localizedString(forKey: key, value: key, table: nil)
+        let text = Lang.bundle.localizedString(forKey: key, value: key, table: nil)
+        // Android's translatable="false" strings (app_name) exist only in English, as in values/
+        return text == key ? english.localizedString(forKey: key, value: key, table: nil) : text
     }
+
+    private static let english: Bundle =
+        Bundle.main.path(forResource: "en", ofType: "lproj").flatMap(Bundle.init(path:)) ?? .main
 
     /// CLDR plural categories for English and Arabic.
     static func pluralCategory(_ n: Int) -> String {
@@ -174,7 +179,9 @@ enum Dates {
         let f = cache[key] ?? {
             let df = DateFormatter()
             df.locale = Lang.dateLocale
-            df.setLocalizedDateFormatFromTemplate(template)
+            // Arabic short months on iOS are "تشرين ١"; Android (ar-LB) shows the full Levantine names
+            let t = Lang.isArabic ? template.replacingOccurrences(of: "MMMM", with: "MMM").replacingOccurrences(of: "MMM", with: "MMMM") : template
+            df.setLocalizedDateFormatFromTemplate(t)
             cache[key] = df
             return df
         }()

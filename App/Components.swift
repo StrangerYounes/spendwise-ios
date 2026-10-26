@@ -187,6 +187,17 @@ struct SnackbarHost: ViewModifier {
 
 extension View {
     func snackbarHost() -> some View { modifier(SnackbarHost()) }
+    /// Floating buttons move up while the message bar shows, as on Android (Scaffold's FAB).
+    func clearOfSnackbar() -> some View { modifier(ClearOfSnackbar()) }
+}
+
+struct ClearOfSnackbar: ViewModifier {
+    @Environment(AppModel.self) private var model
+    func body(content: Content) -> some View {
+        content
+            .padding(.bottom, model.snack == nil ? 0 : 60)
+            .animation(.easeInOut(duration: 0.2), value: model.snack == nil)
+    }
 }
 
 /// A price box that also does sums ("89500/3", "2×1.5"): the number keyboard has no + − × ÷, so

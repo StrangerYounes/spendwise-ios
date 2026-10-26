@@ -124,11 +124,17 @@ final class SpendWiseUITests: XCTestCase {
     /// Insights: a category opens to the lists behind it, and a list opens.
     func testInsightsCategoryOpensItsLists() {
         let app = launch("insights")
-        let groceries = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Groceries'")).firstMatch
-        XCTAssertTrue(groceries.waitForExistence(timeout: 8))
-        groceries.tap()
-        let lists = app.staticTexts.matching(NSPredicate(format: "label ENDSWITH ' lists'")).firstMatch
-        XCTAssertTrue(lists.waitForExistence(timeout: 5))
+        let category = app.buttons.matching(identifier: "categoryRow").firstMatch
+        XCTAssertTrue(category.waitForExistence(timeout: 8))
+        // The breakdown is below the fold
+        for _ in 0..<6 where !category.isHittable { app.swipeUp() }
+        category.tap()
+        XCTAssertTrue(app.staticTexts["categoryLists"].waitForExistence(timeout: 5))
+        // A list behind the category opens
+        let list = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Gas fill-up'")).firstMatch
+        for _ in 0..<3 where !list.isHittable { app.swipeUp() }
+        list.tap()
+        XCTAssertTrue(app.buttons["listTitle"].waitForExistence(timeout: 5))
     }
 
     /// Free: receipts open the Upgrade page instead of the camera.
@@ -143,14 +149,14 @@ final class SpendWiseUITests: XCTestCase {
     /// Renaming a list from its title.
     func testRenameList() {
         let app = launch("list")
-        let title = app.navigationBars.buttons["Weekly groceries"]
-        tapWhenReady(title)
+        tapWhenReady(app.buttons["listTitle"])
         let field = app.alerts.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 5))
         field.tap()
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 30) + "Big shop")
         app.alerts.buttons["Rename"].tap()
-        XCTAssertTrue(app.navigationBars.buttons["Big shop"].waitForExistence(timeout: 5))
+        let renamed = app.buttons.matching(NSPredicate(format: "identifier == 'listTitle' AND label == 'Big shop'")).firstMatch
+        XCTAssertTrue(renamed.waitForExistence(timeout: 5))
     }
 
     /// Sums in price boxes: the result replaces the sum.

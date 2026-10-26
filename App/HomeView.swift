@@ -148,6 +148,7 @@ struct HomeView: View {
         }
         .pulse(guide == .FirstList)
         .padding(16)
+        .clearOfSnackbar()
         .accessibilityIdentifier("newList")
     }
 

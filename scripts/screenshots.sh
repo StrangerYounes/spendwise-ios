@@ -26,14 +26,21 @@ xcrun simctl install "$UDID" "$APP"
 shoot() { # language appearance screen
   local lang="$1" look="$2" screen="$3"
   xcrun simctl ui "$UDID" appearance "$look"
-  xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
   local locale=en_US
   [ "$lang" = ar ] && locale=ar_LB
-  xcrun simctl launch "$UDID" "$BUNDLE" \
-    -AppleLanguages "($lang)" -AppleLocale "$locale" \
-    -"${DEMO}Demo" YES -"${DEMO}Screen" "$screen" >/dev/null
-  sleep "${WAIT:-4}"
-  xcrun simctl io "$UDID" screenshot --type=png "$OUT/${lang}_${look}_${screen}.png" >/dev/null
+  local file="$OUT/${lang}_${look}_${screen}.png" try
+  # A launch now and then shows only the empty background when the shot is taken (a blank frame
+  # is ~90 KB, a real screen 100 KB+): relaunch and wait longer
+  for try in 1 2 3; do
+    xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
+    xcrun simctl launch "$UDID" "$BUNDLE" \
+      -AppleLanguages "($lang)" -AppleLocale "$locale" \
+      -"${DEMO}Demo" YES -"${DEMO}Screen" "$screen" >/dev/null
+    sleep $(( ${WAIT:-4} * try ))
+    xcrun simctl io "$UDID" screenshot --type=png "$file" >/dev/null
+    [ "$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")" -ge "${MIN_BYTES:-95000}" ] && break
+    echo "  (blank, retrying $lang $look $screen)"
+  done
   echo "  $lang $look $screen"
 }
 

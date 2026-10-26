@@ -40,7 +40,8 @@ join, remove, leave, close).
 ## Android bugs found while porting
 1. `and_separator` is `" and "` in strings.xml (Arabic `" و "`), but Android trims the spaces, so
    the AI report preview reads "Looks at: spendingandprice trends". Fix: ` and ` as done
-   for `each_suffix`. iOS has the spaced text (`scripts/ios-strings.json`).
+   for `each_suffix`. iOS has the spaced text (`scripts/ios-strings.json`). Same for `qa_heard`
+   (`Heard: “%1$s”. ` loses its trailing space): quick add shows `Heard: “hello”.No purchases found…`.
 2. Home's search results show a fixed English "Lists" header (no string resource), also in Arabic.
    iOS shows «القوائم» in Arabic.
 

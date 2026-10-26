@@ -91,12 +91,14 @@ final class Cloud {
         ai.attach(model: model, cloud: self)
         guard Self.configured else { return }
         sync = CloudSync(cloud: self, model: model)
-        authHandle = Auth.auth().addStateDidChangeListener { [weak self] _, u in
-            let signed = u.flatMap(Self.signedIn)
-            let uid = u?.uid
+        authHandle = Auth.auth().addStateDidChangeListener { [weak self] _, _ in
             Task { @MainActor in
                 guard let self else { return }
-                self.ai.accountChanged(uid)
+                // Who is signed in when this runs, not when it was queued: a late "nobody" from
+                // start-up must not undo a sign-in that finished meanwhile
+                let u = Auth.auth().currentUser
+                let signed = u.flatMap(Self.signedIn)
+                self.ai.accountChanged(u?.uid)
                 if self.user != signed {
                     self.user = signed
                     self.watchPlan()

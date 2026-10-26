@@ -3,12 +3,14 @@
     "en": {
       "msg_no_google": "Google sign-in didn't open. Check your internet connection, then try again.",
       "premium_coming": "Coming soon: Premium will be a subscription in the App Store.",
-      "and_separator": " and "
+      "and_separator": " and ",
+      "qa_heard": "Heard: “%1$s”. "
     },
     "ar": {
       "msg_no_google": "لم يُفتح تسجيل الدخول عبر Google. تحقّق من اتصالك بالإنترنت ثم حاول مرة أخرى.",
       "premium_coming": "قريبًا: سيكون Premium اشتراكًا عبر App Store.",
-      "and_separator": " و"
+      "and_separator": " و",
+      "qa_heard": "سمعت: «%1$s». "
     }
   },
   "extra": {

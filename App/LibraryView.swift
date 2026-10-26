@@ -84,6 +84,7 @@ struct LibraryView: View {
                         .shadow(color: .black.opacity(0.18), radius: 6, y: 3)
                 }
                 .padding(16)
+                .clearOfSnackbar()
                 .accessibilityLabel(L("add_item"))
             }
         }

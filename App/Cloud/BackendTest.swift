@@ -174,7 +174,8 @@ enum BackendTest {
             signed = await cloud.signInForTest(account)
             if !signed { try? await Task.sleep(for: .seconds(3)) }
         }
-        step("signed in", signed && cloud.user != nil, cloud.user?.uid ?? cloud.lastError ?? "")
+        step("signed in", signed && cloud.user != nil,
+             "\(cloud.user?.uid ?? "no user") emulators=\(cloud.usingEmulators) returned=\(signed) auth=\(Auth.auth().currentUser?.uid ?? "nil") \(cloud.lastError ?? "")")
         facts["uid"] = cloud.user?.uid ?? ""
         // Premium comes from entitlements/{uid}, written by the test script before the phones start
         let premium = await wait(30) { cloud.tier == .premium }

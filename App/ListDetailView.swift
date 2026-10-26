@@ -102,6 +102,7 @@ struct ListDetailView: View {
                 }
                 .pulse(guideItem)
                 .padding(16)
+                .clearOfSnackbar()
                 .accessibilityIdentifier("addItem")
             }
         }
@@ -110,6 +111,7 @@ struct ListDetailView: View {
                 Button { startRename(list) } label: {
                     Text(list?.name ?? "").font(.headline).foregroundStyle(Palette.onSurface).lineLimit(1)
                 }
+                .accessibilityIdentifier("listTitle")
             }
             ToolbarItemGroup(placement: .topBarTrailing) {
                 if reorder {

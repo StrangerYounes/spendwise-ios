@@ -612,8 +612,10 @@ private struct PurchaseCard: View {
                         if let count = item.packOf {
                             HStack(spacing: 4) {
                                 Button { qa.acceptPack(purchase.id, item) } label: {
+                                    // Two lines when needed: the whole sentence says what accepting does
                                     Label(L("pack_of", count), systemImage: "shippingbox").font(.labelL)
-                                        .padding(.horizontal, 10).frame(height: 32)
+                                        .multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
+                                        .padding(.horizontal, 10).padding(.vertical, 6).frame(minHeight: 32)
                                         .foregroundStyle(Palette.onTertiaryContainer)
                                         .background(Palette.tertiaryContainer, in: RoundedRectangle(cornerRadius: 8))
                                 }

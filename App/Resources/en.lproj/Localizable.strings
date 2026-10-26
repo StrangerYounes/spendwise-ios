@@ -389,7 +389,7 @@
 "purchased" = "Purchased";
 "purchases_count" = "Purchases · %1$ld";
 "qa_example" = "e.g. Filled gas for %1$@40, and milk and bread at Spinneys for %1$@6";
-"qa_heard" = "Heard: “%1$@”.";
+"qa_heard" = "Heard: “%1$@”. ";
 "qa_intro" = "Say it or type it. Spending or a list to shop from, in any language.";
 "qa_intro_receipts" = "Say it, type it, or snap a receipt. Spending or a list to shop from, in any language.";
 "qa_listening_hint" = "Say what you bought or need, where, and how much. Tap done when finished.";

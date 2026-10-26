@@ -142,7 +142,8 @@ private struct TrendCard: View {
             } else {
                 Chart {
                     ForEach(Array(shown.enumerated()), id: \.offset) { i, p in
-                        AreaMark(x: .value("Date", Date(millis: p.date)), y: .value("Price", values[i]))
+                        // From the axis floor, not zero: the y scale starts at the lowest price
+                        AreaMark(x: .value("Date", Date(millis: p.date)), yStart: .value("Low", values.min() ?? 0), yEnd: .value("Price", values[i]))
                             .foregroundStyle(LinearGradient(colors: [Palette.primary.opacity(0.25), .clear], startPoint: .top, endPoint: .bottom))
                         LineMark(x: .value("Date", Date(millis: p.date)), y: .value("Price", values[i]))
                             .foregroundStyle(Palette.primary)
@@ -157,6 +158,7 @@ private struct TrendCard: View {
                 }
                 .chartYScale(domain: (values.min() ?? 0)...(max(values.max() ?? 1, (values.min() ?? 0) + 0.0001)))
                 .chartXAxis(.hidden)
+                .chartPlotStyle { $0.clipped() }
                 .chartYAxis {
                     AxisMarks(position: .leading, values: [values.min() ?? 0, values.max() ?? 0]) { v in
                         AxisGridLine().foregroundStyle(Palette.outlineVariant)
