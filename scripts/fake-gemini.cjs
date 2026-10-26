@@ -31,7 +31,10 @@ globalThis.fetch = async function (url, init) {
   const props = Object.keys(body.generationConfig?.responseSchema?.properties ?? {});
   // The own-instructions part may sit in another content or part than the prompt: look at it all
   const upper = init.body.includes("CAPITAL LETTERS");
-  const name = (s) => (upper ? s.toUpperCase() : s);
+  // The app maps names onto the item library ignoring case (as Android), so "TOMATOES" would come
+  // back as "Tomatoes": followed instructions give names the library doesn't have
+  const name = (s) => (upper ? `${s.toUpperCase()} (AS ASKED)` : s);
+  console.log(`[fake-gemini] own instructions followed: ${upper}`);
   console.log(`[fake-gemini] call ${calls}: ${props.join(",")} images=${parts.filter((p) => p.inlineData?.mimeType === "image/jpeg").length}`);
 
   if (props.includes("purchases")) {

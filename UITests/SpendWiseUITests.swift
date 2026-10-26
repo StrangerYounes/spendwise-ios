@@ -130,9 +130,9 @@ final class SpendWiseUITests: XCTestCase {
         for _ in 0..<8 where !(category.exists && category.isHittable) { app.swipeUp() }
         XCTAssertTrue(category.waitForExistence(timeout: 3))
         category.tap()
-        XCTAssertTrue(app.staticTexts["categoryLists"].waitForExistence(timeout: 5))
-        // A list behind the category opens
+        // The lists behind the biggest category (Car: the gas fill-ups) show under it, and one opens
         let list = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Gas fill-up'")).firstMatch
+        XCTAssertTrue(list.waitForExistence(timeout: 5))
         for _ in 0..<3 where !list.isHittable { app.swipeUp() }
         list.tap()
         XCTAssertTrue(app.buttons["listTitle"].waitForExistence(timeout: 5))
