@@ -1,0 +1,193 @@
+# Builds and checks SpendWise without a Mac of our own:
+#  - core: the Core package's tests on Linux (cheap, fast)
+#  - ios:  on a GitHub macOS runner: the Core tests again, the app built for the iOS Simulator,
+#          screenshots of every screen (English and Arabic, light and dark), UI tests tapping
+#          through the app, then the backend end to end: the real Firestore rules and Cloud
+#          Functions (copied from the Android repo, never deployed from here) on the Firebase
+#          emulators, Gemini stubbed, with two simulators sharing one account.
+# Artifacts: screenshots, the UI test results, the backend reports and a zipped simulator build
+# for Appetize.io.
+name: iOS
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    container: swift:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: SQLite headers
+        run: apt-get update -qq && apt-get install -y -qq libsqlite3-dev > /dev/null
+      - name: Core tests (Linux)
+        run: |
+          set -o pipefail
+          swift test --package-path Core 2>&1 | grep -E "error|failed|Executed [0-9]+ tests" | tail -40
+
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 150
+    env:
+      APPETIZE_TOKEN: ${{ secrets.APPETIZE_TOKEN }}
+      APPETIZE_KEY: ${{ vars.APPETIZE_PUBLIC_KEY }}
+      APP_CHECK_DEBUG_TOKEN: ${{ secrets.APP_CHECK_DEBUG_TOKEN }}
+      APP: build/Build/Products/Debug-iphonesimulator/SpendWise.app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tools
+        run: |
+          brew install xcodegen > /dev/null
+          xcodebuild -version
+
+      - name: Core tests (macOS)
+        run: swift test --package-path Core 2>&1 | grep -E "error|failed|Executed [0-9]+ tests" | tail -20; exit ${PIPESTATUS[0]}
+
+      - name: Generate the Xcode project
+        run: xcodegen generate
+
+      - name: Pick simulators
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devs = [d for rt, ds in json.load(sys.stdin)["devices"].items() if "iOS" in rt for d in ds]
+          phones = [d for d in devs if d["name"].startswith("iPhone") and "Pro" in d["name"]] or [d for d in devs if d["name"].startswith("iPhone")]
+          print(phones[-1]["udid"])')
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl list devices | grep "$UDID"
+          # The sync test's second phone, made and booted now: a new simulator spends its first
+          # minutes setting itself up and barely answers meanwhile; by the end of the build it's ready.
+          TYPE=$(xcrun simctl list devices -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print([x for r in d.values() for x in r if x['udid']=='$UDID'][0]['deviceTypeIdentifier'])")
+          RUNTIME=$(xcrun simctl list devices -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print([r for r,v in d.items() for x in v if x['udid']=='$UDID'][0])")
+          UDID2=$(xcrun simctl create "SpendWise B" "$TYPE" "$RUNTIME")
+          echo "UDID2=$UDID2" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID2" || true
+
+      - name: Build for the simulator (app and UI tests)
+        id: build
+        run: |
+          status=0
+          # Ad-hoc signing so the keychain entitlement applies (Firebase Auth needs it)
+          xcodebuild build-for-testing \
+            -project SpendWise.xcodeproj -scheme SpendWise -configuration Debug \
+            -destination "id=$UDID" -derivedDataPath build \
+            APP_CHECK_DEBUG_TOKEN="$APP_CHECK_DEBUG_TOKEN" \
+            CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES > build.log 2>&1 || status=$?
+          # The errors (each once) and the verdict; the full log is an artifact
+          grep -E "error:" build.log | sort -u | head -80 || true
+          grep -E "BUILD (SUCCEEDED|FAILED)|TEST BUILD (SUCCEEDED|FAILED)" build.log || true
+          exit $status
+
+      - name: Screenshots
+        env:
+          BUNDLE: com.unes.spendwise
+          DEMO: SpendWise
+          WAIT: "5"
+          SCREENS: >-
+            welcome welcome_add welcome_setup home home_completed home_search home_guide home_free new_list
+            list list_add list_edit_item list_store list_reorder list_completed list_undo list_guide list_photo
+            library library_prices library_item item item_milk
+            insights insights_category insights_filter categories category_editor stores
+            settings settings_signed_in settings_family settings_currency settings_rate ai_instructions upgrade consent
+            quickadd quickadd_free quickadd_review quickadd_receipt quickadd_receipt_review quickadd_convert quickadd_recording quickadd_error quickadd_busy
+            analysis analysis_ready analysis_free report
+          DARK: home list insights item quickadd_review quickadd_receipt settings_family report welcome upgrade
+        run: scripts/screenshots.sh "$APP" "$UDID" screenshots
+
+      - name: Package the simulator build
+        if: success()
+        run: |
+          cd build/Build/Products/Debug-iphonesimulator && ditto -c -k --sequesterRsrc --keepParent SpendWise.app "$GITHUB_WORKSPACE/SpendWise-simulator.zip"
+
+      - name: UI tests
+        if: success()
+        run: |
+          status=0
+          xcodebuild test-without-building \
+            -project SpendWise.xcodeproj -scheme SpendWise -configuration Debug \
+            -destination "id=$UDID" -derivedDataPath build -resultBundlePath ui-tests.xcresult \
+            CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES > ui-tests.log 2>&1 || status=$?
+          grep -E "Test Case .*(passed|failed)|error:|Executed [0-9]+ test" ui-tests.log | sed 's/^.*Test Case/Test Case/' | head -80 || true
+          exit $status
+
+      - name: Upload to Appetize (optional)
+        if: success() && env.APPETIZE_TOKEN != ''
+        run: |
+          URL=https://api.appetize.io/v1/apps
+          [ -n "$APPETIZE_KEY" ] && URL="$URL/$APPETIZE_KEY"
+          curl -sS --fail -X POST "$URL" -H "X-API-KEY: $APPETIZE_TOKEN" -F "file=@SpendWise-simulator.zip" -F "platform=ios" | tee appetize.json
+          echo
+
+      - uses: actions/setup-java@v4
+        if: always()
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: actions/setup-node@v4
+        if: always()
+        with:
+          node-version: "22"
+
+      - name: Backend end to end (AI and sync on the emulators)
+        if: always() && steps.build.outcome == 'success'
+        timeout-minutes: 45
+        run: |
+          [ -d "$APP" ] || { echo "no app built"; exit 1; }
+          npm install -g firebase-tools > /dev/null 2>&1
+          (cd firebase/functions && npm ci --no-audit --no-fund > /dev/null && npm run build > /dev/null)
+          echo "GEMINI_API_KEY=ci-stub" > firebase/functions/.secret.local
+          # Gemini answers from the stub; everything else in the functions is Android's code
+          (cd firebase && NODE_OPTIONS="--require $GITHUB_WORKSPACE/scripts/fake-gemini.cjs" \
+            firebase emulators:start --only auth,firestore,functions --project spendwise-unes > ../emulators.log 2>&1 &)
+          for i in $(seq 1 120); do
+            curl -s -o /dev/null 127.0.0.1:8196 && curl -s -o /dev/null 127.0.0.1:9196 && curl -s -o /dev/null 127.0.0.1:5196 && break
+            sleep 2
+          done
+          # The functions load on their first call: warm them up until they answer as themselves
+          for f in ai aiAllowance aiPrompts; do
+            for i in $(seq 1 30); do
+              curl -s -X POST -H 'Content-Type: application/json' -d '{"data":{}}' "127.0.0.1:5196/spendwise-unes/europe-west1/$f" | grep -qE "UNAUTHENTICATED|prompts" && break
+              sleep 2
+            done
+          done
+          grep -iE "functions|error" emulators.log | head -20 || true
+          scripts/backend-test.sh "$APP" "$UDID" "$UDID2" backend-test
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: screenshots
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tests
+          path: |
+            ui-tests.log
+            ui-tests.xcresult
+            backend-test
+            emulators.log
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: SpendWise-simulator
+          path: SpendWise-simulator.zip
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore

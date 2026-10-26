@@ -1,0 +1,173 @@
+rules_version = '2';
+
+// SpendWise sync (Premium, checked here against entitlements/). Each account has its own data and nobody else's, unless it's in a
+// family (spaces/{id} below):
+//   users/{uid}/{table}/{row}  one row of the phone's database (CloudSync.kt), with
+//   _t        when each field last changed (epoch ms, per field), used by the phones to merge;
+//             the phones' transactions only ever write a field with a later time than it has
+//   _deleted  true once the row was deleted (kept as a marker so every phone hears of it)
+//   _by       which install wrote it last (troubleshooting)
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // A real account (Google). Phones that aren't signed in get an anonymous account only to
+    // count their AI allowance (functions/src/index.ts); it can't sync or join families.
+    function signedIn() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    function owner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // The tables that sync (SyncSchema.kt)
+    function syncedTable(table) {
+      return table in ['stores', 'categories', 'master_items', 'shopping_lists', 'shopping_items',
+                       'store_item_prices', 'ai_reports', 'app_settings'];
+    }
+
+    function validRow(d) {
+      return d.keys().hasAll(['_t', '_deleted'])
+        && d._t is map && d._t.size() <= 20
+        && d._deleted is bool
+        && (!('_by' in d) || (d._by is string && d._by.size() <= 64));
+    }
+
+    function me() {
+      return request.auth.uid;
+    }
+
+    // Premium (or Max) on the server's record (entitlements/{uid}, set by grant_premium.py or
+    // billing): what keeping an account's own copy in the cloud and starting a family need
+    // (FEATURES.md §3). Family members sync on any plan; the family's owner had Premium to start it.
+    function hasPremium() {
+      let path = /databases/$(database)/documents/entitlements/$(me());
+      return exists(path)
+        && get(path).data.tier in ['premium', 'max']
+        && (!('until' in get(path).data) || get(path).data.until > request.time);
+    }
+
+    // A family's member entry carries the person's own email and name from their sign-in, so
+    // nobody can appear in the members list as someone else
+    function isMe(m) {
+      return m.email == request.auth.token.email
+        && (!('name' in request.auth.token) || m.name == request.auth.token.name || m.name == '');
+    }
+
+    // Rows are a table's columns plus the sync fields; a cap keeps a document from growing
+    function rowSize(d) {
+      return d.size() <= 30;
+    }
+
+    function spaceData(space) {
+      return get(/databases/$(database)/documents/spaces/$(space)).data;
+    }
+
+    function inSpace(space) {
+      return signedIn() && me() in spaceData(space).members;
+    }
+
+    // Families (FamilySharing in Family.kt): spaces/{id} holds the owner and members; the rows
+    // underneath are the family's shared lists, exactly like an account's own.
+    match /spaces/{space} {
+      allow get: if signedIn() && me() in resource.data.members;
+
+      // Starting a family: the owner, alone
+      allow create: if signedIn()
+        && hasPremium()
+        && request.resource.data.owner == me()
+        && request.resource.data.members.keys().hasOnly([me()])
+        && request.resource.data.members[me()].role == 'owner'
+        && isMe(request.resource.data.members[me()]);
+
+      // The owner removes members (people add themselves by joining) and keeps ownership; their
+      // own entry stays theirs (the name and email of their sign-in)
+      function ownerEdit() {
+        let after = request.resource.data.members;
+        return resource.data.owner == me()
+          && request.resource.data.owner == me()
+          && me() in after
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
+          && after.keys().hasOnly(resource.data.members.keys())
+          && (after[me()] == resource.data.members[me()] || isMe(after[me()]));
+      }
+
+      // Someone adds only themselves, as a member, with an unused live invite for this family
+      // that the same write marks as used by them
+      function joining() {
+        let added = request.resource.data.members.diff(resource.data.members).affectedKeys();
+        let code = request.resource.data.members[me()].invite;
+        let before = get(/databases/$(database)/documents/invites/$(code)).data;
+        let after = getAfter(/databases/$(database)/documents/invites/$(code)).data;
+        return !(me() in resource.data.members)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
+          && added.hasOnly([me()])
+          && request.resource.data.members[me()].role == 'member'
+          && isMe(request.resource.data.members[me()])
+          && before.space == space && before.usedBy == null && before.expiresAt > request.time
+          && after.usedBy == me();
+      }
+
+      // A member takes only themselves off
+      function leaving() {
+        return me() in resource.data.members
+          && resource.data.owner != me()
+          && !(me() in request.resource.data.members)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
+          && resource.data.members.diff(request.resource.data.members).affectedKeys().hasOnly([me()]);
+      }
+
+      allow update: if signedIn() && (ownerEdit() || joining() || leaving());
+      allow delete: if signedIn() && resource.data.owner == me();
+
+      match /{table}/{row} {
+        allow read: if inSpace(space) && syncedTable(table);
+        allow create, update: if inSpace(space) && syncedTable(table) && row.size() <= 80
+          && validRow(request.resource.data) && rowSize(request.resource.data);
+        allow delete: if inSpace(space) && syncedTable(table);
+      }
+    }
+
+    // Invites: knowing the code is what lets someone read it
+    match /invites/{code} {
+      allow get: if signedIn();
+      // Its maker finds their own unused codes (closing a family deletes them)
+      allow list: if signedIn() && resource.data.by == me();
+      allow create: if signedIn()
+        && code.size() == 8
+        && request.resource.data.by == me()
+        && spaceData(request.resource.data.space).owner == me()
+        && request.resource.data.usedBy == null
+        && request.resource.data.expiresAt is timestamp;
+      // Used once, by whoever joins with it, before it expires
+      allow update: if signedIn()
+        && resource.data.usedBy == null
+        && resource.data.expiresAt > request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedBy'])
+        && request.resource.data.usedBy == me();
+      allow delete: if signedIn() && resource.data.by == me();
+    }
+
+    match /users/{uid} {
+      allow read, delete: if owner(uid);
+      // Only which family the account is in (any plan: joining a family works on Free)
+      allow create, update: if owner(uid)
+        && request.resource.data.keys().hasOnly(['space'])
+        && (request.resource.data.space == null || (request.resource.data.space is string && request.resource.data.space.size() <= 64));
+
+      match /{table}/{row} {
+        allow read: if owner(uid) && syncedTable(table);
+        allow create, update: if owner(uid) && hasPremium() && syncedTable(table) && row.size() <= 80
+          && validRow(request.resource.data) && rowSize(request.resource.data);
+        // Deleting the account erases its rows (Settings → Delete account)
+        allow delete: if owner(uid) && syncedTable(table);
+      }
+    }
+
+    // Which plan an account is on: set on the server (billing), readable by its owner only.
+    // usage/, usage_global/ and config/ (the AI's allowances and switches) are server only.
+    match /entitlements/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

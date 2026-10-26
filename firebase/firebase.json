@@ -1,0 +1,60 @@
+{
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "runtime": "nodejs22",
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ],
+      "ignore": [
+        "node_modules",
+        ".git",
+        "*.log",
+        "src",
+        "lib/test",
+        ".secret.local"
+      ]
+    }
+  ],
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json",
+    "database": "(default)",
+    "location": "europe-west1"
+  },
+  "hosting": {
+    "public": "site",
+    "ignore": [
+      "firebase.json",
+      "**/.*"
+    ],
+    "redirects": [
+      {
+        "source": "/",
+        "destination": "https://younes.app/spendwise",
+        "type": 301
+      },
+      {
+        "regex": "^/(.+)$",
+        "destination": "https://younes.app/spendwise/:1",
+        "type": 301
+      }
+    ]
+  },
+  "emulators": {
+    "auth": {
+      "port": 9196
+    },
+    "firestore": {
+      "port": 8196
+    },
+    "functions": {
+      "port": 5196
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true
+  }
+}
