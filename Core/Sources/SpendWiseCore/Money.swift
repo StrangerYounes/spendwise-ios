@@ -32,7 +32,7 @@ public func javaFixed(_ d: Double, _ decimals: Int) -> String {
 }
 
 /// Thousands separated by commas: "1,234,567.50".
-func grouped(_ fixed: String) -> String {
+public func grouped(_ fixed: String) -> String {
     let negative = fixed.hasPrefix("-")
     let unsigned = negative ? String(fixed.dropFirst()) : fixed
     let parts = unsigned.split(separator: ".", maxSplits: 1)

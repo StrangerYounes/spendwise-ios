@@ -10,3 +10,11 @@ screenshots/
 *.ipa
 *-simulator.zip
 .DS_Store
+
+# Firebase emulators (CI only)
+firebase/functions/node_modules/
+firebase/functions/lib/
+firebase/functions/.secret.local
+*.log
+ui-tests.xcresult/
+backend-test/

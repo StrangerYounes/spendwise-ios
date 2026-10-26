@@ -1,0 +1,85 @@
+# XcodeGen spec: `xcodegen generate` writes SpendWise.xcodeproj (not kept in git).
+name: SpendWise
+options:
+  bundleIdPrefix: com.unes
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+packages:
+  SpendWiseCore:
+    path: Core
+  # Sync, families, the AI backend and Google sign-in, on the same Firebase project as Android (spendwise-unes)
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: 11.15.0
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: 8.0.0
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+targets:
+  SpendWise:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+    dependencies:
+      - package: SpendWiseCore
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: Firebase
+        product: FirebaseFunctions
+      - package: Firebase
+        product: FirebaseAppCheck
+      - package: GoogleSignIn
+        product: GoogleSignIn
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.unes.spendwise
+        PRODUCT_NAME: SpendWise
+        INFOPLIST_FILE: App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/SpendWise.entitlements
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+        LOCALIZATION_PREFERS_STRING_CATALOGS: NO
+        SWIFT_EMIT_LOC_STRINGS: NO
+        # App Check's debug token for builds that talk to the real project (CI passes a secret; never committed)
+        APP_CHECK_DEBUG_TOKEN: ""
+  SpendWiseUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: SpendWise
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.unes.spendwise.uitests
+        TEST_TARGET_NAME: SpendWise
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  SpendWise:
+    build:
+      targets:
+        SpendWise: all
+        SpendWiseUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - SpendWiseUITests
+    archive:
+      config: Release

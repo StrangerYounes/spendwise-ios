@@ -1,0 +1,46 @@
+{
+  "overrides": {
+    "en": {
+      "msg_no_google": "Google sign-in didn't open. Check your internet connection, then try again.",
+      "premium_coming": "Coming soon: Premium will be a subscription in the App Store.",
+      "and_separator": " and "
+    },
+    "ar": {
+      "msg_no_google": "لم يُفتح تسجيل الدخول عبر Google. تحقّق من اتصالك بالإنترنت ثم حاول مرة أخرى.",
+      "premium_coming": "قريبًا: سيكون Premium اشتراكًا عبر App Store.",
+      "and_separator": " و"
+    }
+  },
+  "extra": {
+    "en": {
+      "err_save": "Couldn't save that",
+      "take_photo": "Take photo",
+      "camera_unavailable": "There's no camera here. Pick the receipt from your photos instead.",
+      "mic_denied": "SpendWise can't use the microphone. Allow it in Settings → SpendWise → Microphone.",
+      "camera_denied": "SpendWise can't use the camera. Allow it in Settings → SpendWise → Camera.",
+      "language_ios_note": "Also in Settings → SpendWise → Language."
+    },
+    "ar": {
+      "err_save": "تعذّر الحفظ",
+      "take_photo": "التقاط صورة",
+      "camera_unavailable": "لا توجد كاميرا هنا. اختر صورة الإيصال من صورك بدلًا من ذلك.",
+      "mic_denied": "لا يمكن لـ SpendWise استخدام الميكروفون. اسمح به من الإعدادات ← SpendWise ← الميكروفون.",
+      "camera_denied": "لا يمكن لـ SpendWise استخدام الكاميرا. اسمح بها من الإعدادات ← SpendWise ← الكاميرا.",
+      "language_ios_note": "وأيضًا من الإعدادات ← SpendWise ← اللغة."
+    }
+  },
+  "infoplist": {
+    "en": {
+      "CFBundleDisplayName": "SpendWise",
+      "NSCameraUsageDescription": "Take a photo of a receipt so the AI can read its items, or attach a photo to a list.",
+      "NSMicrophoneUsageDescription": "Say what you bought or what to analyze; the voice note goes to the AI to be understood.",
+      "NSPhotoLibraryUsageDescription": "Pick a receipt photo to read, or a photo to attach to a list."
+    },
+    "ar": {
+      "CFBundleDisplayName": "SpendWise",
+      "NSCameraUsageDescription": "التقط صورة لإيصال ليقرأ الذكاء الاصطناعي أصنافه، أو أرفق صورة بقائمة.",
+      "NSMicrophoneUsageDescription": "قل ما اشتريته أو ما تريد تحليله؛ يُرسَل التسجيل الصوتي إلى الذكاء الاصطناعي ليفهمه.",
+      "NSPhotoLibraryUsageDescription": "اختر صورة إيصال لقراءتها، أو صورة لإرفاقها بقائمة."
+    }
+  }
+}

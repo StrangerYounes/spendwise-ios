@@ -40,7 +40,7 @@ public struct AnalysisRequest: Equatable, Sendable {
     public var focusLabel: String {
         if Set(focus) == Set(AnalysisFocus.allCases) { return "Everything" }
         let joined = focus.map(\.label).joined(separator: " and ")
-        return joined.prefix(1).uppercased() + joined.dropFirst()
+        return String(joined.prefix(1)).uppercased() + String(joined.dropFirst())
     }
 
     /** "Groceries · Spinneys", or nil when the request covers everything. */
