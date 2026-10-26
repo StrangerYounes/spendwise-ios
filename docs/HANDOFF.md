@@ -4,7 +4,7 @@
 State on 26 Oct evening: the app builds; run 6 (40325996166) passed every backend check (55/55:
 AI, allowances, receipts + note + own instructions + follow-up, reports, two-phone sync) and every
 UI test but one (Insights category, a test-scrolling problem). Run 7 (40332146549) carries that
-test fix. The repo was made **private** before the laptop slept (run 7 may still have finished).
+test fix but was CANCELLED (the handoff push cancelled it via the workflow concurrency group, and that push's run was cancelled too): rerun it with `gh run rerun 40332146549 -R StrangerYounes/spendwise-ios` after making the repo public. Repo is **private** now.
 1. `gh run view 40332146549 -R StrangerYounes/spendwise-ios --json conclusion,jobs`. If the UI test
    still fails: make the repo public (`-f visibility=public`), fix, push, watch, then private again.
 2. When green: `gh run download <id> -R StrangerYounes/spendwise-ios -n screenshots` into
