@@ -32,7 +32,7 @@ enum DemoMode {
         // Per-install choices start fresh in each demo
         model.setConsent(!["consent"].contains(s))
         for k in InstructionKind.allCases { model.setInstructions(k, "") }
-        if s == "ai_instructions" { model.setInstructions(.QuickAdd, Lang.isArabic ? "سمِّ الأصناف بالإنكليزي. «بزري» هو الفرن." : "Name items in English. \"Bizri\" is the bakery.") }
+        if s == "ai_instructions" { model.setInstructions(.QuickAdd, Lang.isArabic ? "سمِّ الأصناف بالإنكليزي. «أبو سامي» هو الفرن." : "Name items in English. \"Abu Sami\" is the bakery.") }
         model.setOnboarding(s.hasPrefix("welcome") ? .Welcome : s == "home_guide" ? .FirstList : s == "list_guide" ? .FirstItem : .Done)
         if s != "home_guide" && s != "home_empty" && !s.hasPrefix("welcome") { DemoData.load(model) }
         model.cloud.overrideTier(free.contains(s) ? .free : .premium)
@@ -201,7 +201,7 @@ enum DemoMode {
             ctx.fill(CGRect(origin: .zero, size: size))
             let lines = lower
                 ? ["Coffee 815,000", "Halloumi 1,180,000", "", "TOTAL L.L. 2,434,000", "CASH 2,500,000", "Thank you!"]
-                : ["SPINNEYS ACHRAFIEH", "26/10/2026  11:42", "", "Tomatoes 1.2 kg", "  120,000  144,000", "Labneh 295,000", "Halloumi 1,180,000", "Coffee 815,000"]
+                : ["SUPERMARKET", "26/10/2026  11:42", "", "Tomatoes 1.2 kg", "  120,000  144,000", "Labneh 295,000", "Halloumi 1,180,000", "Coffee 815,000"]
             let font = UIFont.monospacedSystemFont(ofSize: 30, weight: .regular)
             for (i, line) in lines.enumerated() {
                 (line as NSString).draw(at: CGPoint(x: 40, y: 60 + CGFloat(i) * 70), withAttributes: [.font: font, .foregroundColor: UIColor.darkGray])

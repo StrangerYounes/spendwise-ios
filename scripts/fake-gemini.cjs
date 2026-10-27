@@ -43,7 +43,7 @@ globalThis.fetch = async function (url, init) {
       purchases: [
         { bought: true, listName: "Gas fill-up", category: "Car", store: null, date: null,
           items: [{ name: name("Gas"), quantity: 1, unit: null, unitPrice: null, totalPrice: 40, currency: null }] },
-        { bought: true, listName: "Groceries", category: "Groceries", store: "Spinneys", date: null,
+        { bought: true, listName: "Groceries", category: "Groceries", store: "Supermarket", date: null,
           items: [{ name: name("Milk"), quantity: 1, unit: null, unitPrice: null, totalPrice: 3.5, currency: null }] },
       ],
     });
@@ -59,7 +59,7 @@ globalThis.fetch = async function (url, init) {
       title: "Last month's spending",
       summary: "You spent a little more than the month before; groceries were most of it.",
       sections: [{ kind: "prices", heading: "Gas went up", body: "Each fill-up cost more.", points: ["Four fill-ups at Total"] }],
-      tips: ["Buy milk at Carrefour."],
+      tips: ["Buy milk at the mini market."],
     });
   }
   if (props.includes("items")) {
@@ -71,7 +71,7 @@ globalThis.fetch = async function (url, init) {
     ];
     const followUp = /remove the coffee/i.test(prompt);
     return reply({
-      transcript: null, store: "Spinneys", date: null, currency: "LBP", listName: "Receipt", category: "Groceries", existingList: null,
+      transcript: null, store: "Supermarket", date: null, currency: "LBP", listName: "Receipt", category: "Groceries", existingList: null,
       items: followUp ? lines.filter((l) => !/coffee/i.test(l.name)) : lines,
     });
   }

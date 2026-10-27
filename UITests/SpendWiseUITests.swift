@@ -72,7 +72,7 @@ final class SpendWiseUITests: XCTestCase {
         let text = app.descendants(matching: .any)["quickAddText"].firstMatch
         XCTAssertTrue(text.waitForExistence(timeout: 5))
         text.tap()
-        text.typeText("filled gas for 40, milk and bread at Spinneys, need eggs")
+        text.typeText("filled gas for 40, milk and bread at the supermarket, need eggs")
         tapWhenReady(app.buttons["quickAddSend"])
         XCTAssertTrue(app.staticTexts["Check and save"].waitForExistence(timeout: 10))
         tapWhenReady(app.buttons["saveQuickAdd"])

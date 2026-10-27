@@ -4,13 +4,17 @@
       "msg_no_google": "Google sign-in didn't open. Check your internet connection, then try again.",
       "premium_coming": "Coming soon: Premium will be a subscription in the App Store.",
       "and_separator": " and ",
-      "qa_heard": "Heard: “%1$s”. "
+      "qa_heard": "Heard: “%1$s”. ",
+      "qa_example": "e.g. Filled gas for %1$s40, and milk and bread at the supermarket for %1$s6",
+      "ai_instructions_quick_hint": "e.g. Name items in English. \"Abu Sami\" is the bakery."
     },
     "ar": {
       "msg_no_google": "لم يُفتح تسجيل الدخول عبر Google. تحقّق من اتصالك بالإنترنت ثم حاول مرة أخرى.",
       "premium_coming": "قريبًا: سيكون Premium اشتراكًا عبر App Store.",
       "and_separator": " و",
-      "qa_heard": "سمعت: «%1$s». "
+      "qa_heard": "سمعت: «%1$s». ",
+      "qa_example": "مثلًا: عبّأت بنزين بـ⁦%1$s40⁩، وحليب وخبز من السوبرماركت بـ⁦%1$s6⁩",
+      "ai_instructions_quick_hint": "مثلًا: سمِّ الأصناف بالإنكليزية. «أبو سامي» هو الفرن."
     }
   },
   "extra": {

@@ -62,7 +62,7 @@ Each line: where, what to do, what you should see. Android's behaviour is the re
 
 ### Quick add and receipts (AI)
 - The bar or the mic: first use asks **Use the AI?** (Not now does nothing). Type "filled gas for
-  40 and milk at Spinneys" → review cards (Bought / To buy, category, store, date, list) → Save.
+  40 and milk at the supermarket" → review cards (Bought / To buy, category, store, date, list) → Save.
 - Receipt from gallery (Premium): up to three photos, a note, Read receipt → review; "Ask for
   changes…" under it ("remove the coffee"); lira prices convert at the saved rate (Change / Don't
   convert); a price about 3× the last one shows "Pack of 3?".

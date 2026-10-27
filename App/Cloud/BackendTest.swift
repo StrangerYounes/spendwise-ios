@@ -76,7 +76,7 @@ enum BackendTest {
 
         // Quick add, typed
         let qa = QuickAddModel(model: model)
-        qa.text = "filled gas for 40 and milk at Spinneys"
+        qa.text = "filled gas for 40 and milk at the supermarket"
         qa.parseText()
         _ = await wait(60) { if case .review = qa.state { return true }; if case .input(let e) = qa.state, e != nil { return true }; return false }
         if case .review(let r) = qa.state {
@@ -189,7 +189,7 @@ enum BackendTest {
         guard await signedInAndSyncing(model) else { return }
         let repo = model.repo
         let ok = model.perform {
-            let store = try repo.insertStore(Store(name: "Spinneys"))
+            let store = try repo.insertStore(Store(name: "Supermarket"))
             let list = try repo.insertShoppingList(ShoppingList(name: listName, storeId: store))
             try repo.insertShoppingItem(ShoppingItem(listId: list, itemName: "Milk", estimatedPrice: 1.8, quantity: 2, unit: "l", orderIndex: 0))
             try repo.insertShoppingItem(ShoppingItem(listId: list, itemName: "Bread", estimatedPrice: 0.9, orderIndex: 1))
@@ -212,7 +212,7 @@ enum BackendTest {
         guard let list = model.lists.first(where: { $0.shoppingList.name == listName })?.shoppingList else { return }
         let items = model.items(list.id)
         step("items arrived", Set(items.map(\.itemName)) == ["Milk", "Bread", "Eggs"], items.map(\.itemName).joined(separator: ", "))
-        step("store arrived", list.storeId.flatMap { id in model.stores.first { $0.id == id }?.name } == "Spinneys", "")
+        step("store arrived", list.storeId.flatMap { id in model.stores.first { $0.id == id }?.name } == "Supermarket", "")
         // Tick Bread here (the first phone changes its price meanwhile), add an item, delete Eggs
         if var bread = items.first(where: { $0.itemName == "Bread" }) {
             bread.purchased = true

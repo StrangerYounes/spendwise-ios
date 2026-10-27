@@ -43,7 +43,7 @@ public struct AnalysisRequest: Equatable, Sendable {
         return String(joined.prefix(1)).uppercased() + String(joined.dropFirst())
     }
 
-    /** "Groceries · Spinneys", or nil when the request covers everything. */
+    /** "Groceries · Supermarket", or nil when the request covers everything. */
     public var filterLabel: String? {
         let parts = [category, store, item].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")

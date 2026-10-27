@@ -114,7 +114,7 @@ def check(out):
         if list_uid in lists:
             l = lists[list_uid]
             expect(l.get("name") == "Shared from iPhone A", f"list name: {l.get('name')}")
-            expect(l.get("storeId") in stores and stores[l["storeId"]].get("name") == "Spinneys", "list's store travels as the store's uid")
+            expect(l.get("storeId") in stores and stores[l["storeId"]].get("name") == "Supermarket", "list's store travels as the store's uid")
             expect(set(l.get("_t", {}).keys()) >= {"name", "createdDate", "isCompleted"}, f"change times kept per field: {sorted(l.get('_t', {}).keys())}")
             expect(l.get("_deleted") is False, "list not deleted")
         by_name = {}

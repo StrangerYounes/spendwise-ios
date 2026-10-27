@@ -21,7 +21,7 @@
 "ai_instructions_base_note" = "Words in [brackets] are filled in with yours when a request is sent. The prompt is in English, which the AI follows best; it still answers in your language.";
 "ai_instructions_intro" = "The AI follows a base prompt written for SpendWise. You can read it but not change it; what you write here is added after it, for that kind of request only. Your instructions stay on this phone.";
 "ai_instructions_quick_about" = "What you type or say, and the changes you ask for on it";
-"ai_instructions_quick_hint" = "e.g. Name items in English. \"Bizri\" is the bakery.";
+"ai_instructions_quick_hint" = "e.g. Name items in English. \"Abu Sami\" is the bakery.";
 "ai_instructions_receipt_about" = "Reading receipt photos, and the changes you ask for on them";
 "ai_instructions_receipt_hint" = "e.g. Use the English names from my item library. Leave out bag charges.";
 "ai_instructions_receipts" = "Receipts";
@@ -252,8 +252,6 @@
 "got_it" = "Got it";
 "groceries" = "Groceries";
 "groceries_no_rename" = "Groceries can't be renamed, only recoloured";
-"groceries_only_hint" = "Only Groceries lists feed the item library and price tracking.";
-"grocery_prices" = "Grocery prices";
 "guide_item_body" = "Tap Add item and type what you need. Add a price if you know it; next time SpendWise suggests it.";
 "guide_item_title" = "Add your first item";
 "guide_list_body" = "Tap New list and give it a name, like “Weekly groceries”.";
@@ -284,7 +282,7 @@
 "last_small" = "last";
 "left_today" = "%1$ld left today";
 "library_empty" = "Your library is empty";
-"library_empty_sub" = "Items you buy in Groceries lists are added here automatically, with their prices per store.";
+"library_empty_sub" = "Items you buy are added here automatically, with their prices per store.";
 "list_actions" = "List actions";
 "list_empty" = "This list is empty";
 "list_empty_sub" = "Add what you need. Items you've bought before are suggested with their last price.";
@@ -392,7 +390,7 @@
 "purchase_history" = "Purchase history";
 "purchased" = "Purchased";
 "purchases_count" = "Purchases · %1$ld";
-"qa_example" = "e.g. Filled gas for %1$@40, and milk and bread at Spinneys for %1$@6";
+"qa_example" = "e.g. Filled gas for %1$@40, and milk and bread at the supermarket for %1$@6";
 "qa_heard" = "Heard: “%1$@”. ";
 "qa_intro" = "Say it or type it. Spending or a list to shop from, in any language.";
 "qa_intro_receipts" = "Say it, type it, or snap a receipt. Spending or a list to shop from, in any language.";
