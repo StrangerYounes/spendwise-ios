@@ -42,12 +42,62 @@ final class RepositoryTests: XCTestCase {
         XCTAssertEqual(try database.masterItem(named: "Milk")?.purchaseCount, 1)
     }
 
-    func testOnlyGroceriesFeedTheLibrary() throws {
-        let car = try repo.insertCategory(Category(name: "Car", color: 1))
-        let list = try repo.insertShoppingList(ShoppingList(name: "Gas", categoryId: car))
+    func testFreshInstallHasTheDefaultCategories() throws {
+        let names = try database.allCategories().map(\.name)
+        XCTAssertEqual(Set(names), ["Groceries", "Gifts", "Car", "Miscellaneous"])
+        XCTAssertEqual(try database.category(named: "Groceries")?.color, AppDatabase.groceriesColor)
+    }
+
+    func testEveryCategoryFeedsTheLibrary() throws {
+        let car = try XCTUnwrap(database.category(named: "Car")).id
+        let total = try repo.insertStore(Store(name: "Total"))
+        let list = try repo.insertShoppingList(ShoppingList(name: "Gas", storeId: total, categoryId: car))
         try repo.insertShoppingItem(ShoppingItem(listId: list, itemName: "Gas", actualPrice: 40, purchased: true))
-        XCTAssertNil(try database.masterItem(named: "Gas"))
+        let gas = try XCTUnwrap(database.masterItem(named: "Gas"))
+        XCTAssertEqual(gas.purchaseCount, 1)
+        XCTAssertEqual(try database.price(item: gas.id, store: total)?.lastPrice, 40)
         XCTAssertTrue(try XCTUnwrap(repo.items(listId: list).first).isTracked)
+    }
+
+    /// Before every category fed the library, other categories' purchases were marked tracked
+    /// without reaching it: the catch-up adds those names once, with their own dates.
+    func testCatchUpAddsOtherCategoriesOnce() throws {
+        let car = try XCTUnwrap(database.category(named: "Car")).id
+        let total = try repo.insertStore(Store(name: "Total"))
+        let old = at(2026, 9, 1, 9), later = at(2026, 9, 20, 9)
+        for (date, price) in [(old, 38.0), (later, 41.0)] {
+            let list = try database.insertShoppingList(ShoppingList(name: "Gas", createdDate: date, completedDate: date, isCompleted: true,
+                                                                    storeId: total, categoryId: car))
+            _ = try database.insertItem(ShoppingItem(listId: list, itemName: "Gas", actualPrice: price, purchased: true, isTracked: true))
+        }
+        // Milk is already in the library (bought in Groceries): left as it is
+        let gifts = try XCTUnwrap(database.category(named: "Gifts")).id
+        let giftList = try database.insertShoppingList(ShoppingList(name: "Party", createdDate: later, completedDate: later, isCompleted: true, categoryId: gifts))
+        _ = try database.insertItem(ShoppingItem(listId: giftList, itemName: "Milk", actualPrice: 9, purchased: true, isTracked: true))
+        _ = try database.insertMasterItem(MasterItem(name: "Milk", averagePrice: 2, lastPrice: 2, lowestPrice: 2, highestPrice: 2, purchaseCount: 3, lastPurchaseDate: old))
+
+        XCTAssertEqual(try repo.catchUpLibraryWithAllCategories(), 1)
+        let gas = try XCTUnwrap(database.masterItem(named: "Gas"))
+        XCTAssertEqual(gas.purchaseCount, 2)
+        XCTAssertEqual(gas.lastPrice, 41)
+        XCTAssertEqual(gas.lowestPrice, 38)
+        XCTAssertEqual(gas.lastPurchaseDate, later)
+        XCTAssertEqual(try database.price(item: gas.id, store: total)?.lastPrice, 41)
+        XCTAssertEqual(try database.masterItem(named: "Milk")?.purchaseCount, 3)
+        // A second run (another phone, or a relaunch) adds nothing
+        XCTAssertEqual(try repo.catchUpLibraryWithAllCategories(), 0)
+        XCTAssertEqual(try database.masterItem(named: "Gas")?.purchaseCount, 2)
+    }
+
+    func testSuggestionsPutTheListsCategoryFirst() throws {
+        let car = try XCTUnwrap(database.category(named: "Car")).id
+        let gasList = try repo.insertShoppingList(ShoppingList(name: "Gas", categoryId: car))
+        for _ in 0..<3 { try repo.insertShoppingItem(ShoppingItem(listId: gasList, itemName: "Gas", actualPrice: 40, purchased: true)) }
+        try repo.insertShoppingItem(ShoppingItem(listId: try groceries(), itemName: "Garlic", actualPrice: 1, purchased: true))
+        // Gas is bought more, but in a Groceries list Garlic comes first; in a Car list, Gas
+        XCTAssertEqual(try repo.suggestions("ga", listStoreId: nil, listCategory: "Groceries").map(\.name), ["Garlic", "Gas"])
+        XCTAssertEqual(try repo.suggestions("ga", listStoreId: nil, listCategory: "Car").map(\.name), ["Gas", "Garlic"])
+        XCTAssertEqual(try repo.suggestions("ga", listStoreId: nil).map(\.name), ["Gas", "Garlic"])
     }
 
     func testLibraryStatsAverageLowestAndHighest() throws {
@@ -74,7 +124,10 @@ final class RepositoryTests: XCTestCase {
         XCTAssertTrue(gas.isCompleted)
         XCTAssertEqual(gas.completedDate, clock)
         XCTAssertEqual(try database.category(id: gas.categoryId!)?.name, "Car 🚗")
-        XCTAssertEqual(try database.category(id: gas.categoryId!)?.color, ShoppingRepository.newCategoryColors[0])
+        // A colour no other category has (Car, a default, already took the first one)
+        let color = try XCTUnwrap(database.category(id: gas.categoryId!)?.color)
+        XCTAssertTrue(ShoppingRepository.newCategoryColors.contains(color))
+        XCTAssertFalse(AppDatabase.defaultCategories.map(\.color).contains(color))
         XCTAssertEqual(try database.store(id: gas.storeId!)?.name, "Shell")
         XCTAssertEqual(try repo.items(listId: ids[0]).first?.actualPrice, 1.6)
 
@@ -88,10 +141,10 @@ final class RepositoryTests: XCTestCase {
     }
 
     func testExistingCategoriesAndStoresAreReusedIgnoringCase() throws {
-        _ = try repo.insertCategory(Category(name: "Car", color: 5))
+        // Car is one of the default categories
         _ = try repo.insertStore(Store(name: "Shell"))
         _ = try repo.saveQuickPurchases([QuickPurchase(listName: "Gas", categoryName: "car", storeName: "SHELL", date: clock, items: [QuickItem(name: "Gas", unitPrice: 40)])])
-        XCTAssertEqual(try database.allCategories().count, 2) // Groceries and Car
+        XCTAssertEqual(try database.allCategories().count, AppDatabase.defaultCategories.count)
         XCTAssertEqual(try database.allStores().count, 1)
     }
 
@@ -199,7 +252,7 @@ final class RepositoryTests: XCTestCase {
         try repo.insertShoppingItem(ShoppingItem(listId: list, itemName: " Eggs "))
         try repo.insertShoppingItem(ShoppingItem(listId: list, itemName: "eggs", purchased: true))
         let c = try repo.quickAddContext(currencySymbol: "$")
-        XCTAssertEqual(c.categories, ["Groceries"])
+        XCTAssertEqual(Set(c.categories), Set(AppDatabase.defaultCategories.map(\.name)))
         XCTAssertEqual(c.knownItems.map { $0.lowercased() }, ["eggs"], "trimmed, once ignoring case")
         XCTAssertEqual(c.openLists.map(\.name), ["Weekly"])
         XCTAssertEqual(c.openLists[0].toBuy, ["Eggs"])

@@ -20,7 +20,11 @@
       "camera_unavailable": "There's no camera here. Pick the receipt from your photos instead.",
       "mic_denied": "SpendWise can't use the microphone. Allow it in Settings → SpendWise → Microphone.",
       "camera_denied": "SpendWise can't use the camera. Allow it in Settings → SpendWise → Camera.",
-      "language_ios_note": "Also in Settings → SpendWise → Language."
+      "language_ios_note": "Also in Settings → SpendWise → Language.",
+      "default_category_gifts": "Gifts",
+      "default_category_car": "Car",
+      "default_category_misc": "Miscellaneous",
+      "prices_tab": "Prices"
     },
     "ar": {
       "err_save": "تعذّر الحفظ",
@@ -28,7 +32,11 @@
       "camera_unavailable": "لا توجد كاميرا هنا. اختر صورة الإيصال من صورك بدلًا من ذلك.",
       "mic_denied": "لا يمكن لـ SpendWise استخدام الميكروفون. اسمح به من الإعدادات ← SpendWise ← الميكروفون.",
       "camera_denied": "لا يمكن لـ SpendWise استخدام الكاميرا. اسمح بها من الإعدادات ← SpendWise ← الكاميرا.",
-      "language_ios_note": "وأيضًا من الإعدادات ← SpendWise ← اللغة."
+      "language_ios_note": "وأيضًا من الإعدادات ← SpendWise ← اللغة.",
+      "default_category_gifts": "هدايا",
+      "default_category_car": "السيارة",
+      "default_category_misc": "متفرقات",
+      "prices_tab": "الأسعار"
     }
   },
   "infoplist": {

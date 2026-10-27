@@ -20,14 +20,14 @@ enum DemoData {
                     halloumi: "حلوم", oil: "زيت زيتون", coffee: "قهوة", gas: "بنزين", detergent: "مسحوق غسيل", towels: "محارم مطبخ",
                     pizza: "بيتزا", shawarma: "شاورما", panadol: "بنادول",
                     spinneys: "سبينيس", carrefour: "كارفور", total: "توتال", pharmacy: "صيدلية مازن", malak: "ملك الطاووق",
-                    car: "السيارة 🚗", eatingOut: "مطاعم", household: "المنزل", pharmacyCat: "صيدلية",
+                    car: "Car", eatingOut: "مطاعم", household: "المنزل", pharmacyCat: "صيدلية",
                     weekly: "تسوق الأسبوع", gasList: "تعبئة بنزين", party: "سهرة السبت", household1: "أغراض البيت", dinner: "عشاء",
                     pharmacyList: "الصيدلية", chips: "شيبس", juice: "عصير", cake: "كاتو")
             : Names(milk: "Milk", eggs: "Eggs", bread: "Arabic bread", labneh: "Labneh", tomatoes: "Tomatoes", cucumbers: "Cucumbers",
                     chicken: "Chicken breast", halloumi: "Halloumi 400g", oil: "Olive oil", coffee: "Coffee", gas: "Gas", detergent: "Detergent",
                     towels: "Paper towels", pizza: "Pizza", shawarma: "Shawarma", panadol: "Panadol",
                     spinneys: "Spinneys", carrefour: "Carrefour", total: "Total", pharmacy: "Pharmacie Mazen", malak: "Malak al Tawouk",
-                    car: "Car 🚗", eatingOut: "Eating out", household: "Household", pharmacyCat: "Pharmacy",
+                    car: "Car", eatingOut: "Eating out", household: "Household", pharmacyCat: "Pharmacy",
                     weekly: "Weekly groceries", gasList: "Gas fill-up", party: "Saturday party", household1: "Household", dinner: "Dinner",
                     pharmacyList: "Pharmacy", chips: "Chips", juice: "Juice", cake: "Cake")
     }
@@ -44,10 +44,12 @@ enum DemoData {
         do {
             try model.database.db.transaction {
                 model.updateSettings { $0.currencySymbol = "$"; $0.lastConversionRate = 89_500 }
-                let car = try repo.insertCategory(SpendWiseCore.Category(name: n.car, color: Int32(bitPattern: 0xFF03A9F4)))
+                // Car is one of the default categories (stored in English, shown in the app's language)
+                let car = try model.database.category(named: n.car)?.id
+                    ?? repo.insertCategory(SpendWiseCore.Category(name: n.car, color: Int32(bitPattern: 0xFF03A9F4)))
                 let eating = try repo.insertCategory(SpendWiseCore.Category(name: n.eatingOut, color: Int32(bitPattern: 0xFFFF9800)))
                 let household = try repo.insertCategory(SpendWiseCore.Category(name: n.household, color: Int32(bitPattern: 0xFF9C27B0)))
-                let pharmacy = try repo.insertCategory(SpendWiseCore.Category(name: n.pharmacyCat, color: Int32(bitPattern: 0xFFE91E63)))
+                let pharmacy = try repo.insertCategory(SpendWiseCore.Category(name: n.pharmacyCat, color: Int32(bitPattern: 0xFFF44336)))
                 let spinneys = try repo.insertStore(Store(name: n.spinneys))
                 let carrefour = try repo.insertStore(Store(name: n.carrefour))
                 let total = try repo.insertStore(Store(name: n.total))

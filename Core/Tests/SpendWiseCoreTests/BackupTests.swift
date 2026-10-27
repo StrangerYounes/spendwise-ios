@@ -27,9 +27,9 @@ final class BackupCompatibilityTests: XCTestCase {
         XCTAssertEqual(try database.allStores().count, 3)
         XCTAssertEqual(try database.settings()?.currencySymbol, "₺")
 
-        // Groceries existed on the fresh install; its colour comes from the backup
+        // The defaults existed on the fresh install (Groceries' colour comes from the backup), plus Household
         let categories = try database.allCategories()
-        XCTAssertEqual(categories.count, 2)
+        XCTAssertEqual(Set(categories.map(\.name)), ["Groceries", "Gifts", "Car", "Miscellaneous", "Household"])
         XCTAssertEqual(categories.first { $0.name == "Groceries" }?.color, -14575885)
 
         // Store and category links survive

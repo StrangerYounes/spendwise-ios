@@ -163,8 +163,11 @@ func installCoreText() {
 }
 
 /// A category's name as shown: the built-in Groceries in the app's language; others as named.
+/// A category's name as shown: the default ones (stored in English, so they sync and merge the
+/// same on every phone) in the app's language; others as the person named them.
 func categoryLabel(_ name: String?) -> String {
-    (name == nil || name == "Groceries") ? L("groceries") : name!
+    guard let name else { return L("groceries") }
+    return AppDatabase.defaultCategoryKey(name).map { L($0) } ?? name
 }
 
 /// Wraps text that may mix directions (a name or amount in an Arabic sentence) so it keeps its own.

@@ -63,6 +63,10 @@ final class AppModel {
         database.db.onChange = { [weak self] in
             Task { @MainActor in self?.changed() }
         }
+        // Once per install: things bought outside Groceries before every category fed the library
+        if !defaults.bool(forKey: Keys.libraryAllCategories) {
+            if (try? repo.catchUpLibraryWithAllCategories()) != nil { defaults.set(true, forKey: Keys.libraryAllCategories) }
+        }
         // The first start checks for lists; an install that has some skips the welcome
         if onboarding == nil { setOnboarding((try? repo.hasLists()) == true ? .Done : .Welcome) }
         cloud.attach(self)
@@ -89,6 +93,11 @@ final class AppModel {
     var currency: String { settings.currencySymbol.isEmpty ? "$" : settings.currencySymbol }
 
     func list(_ id: Int64) -> ShoppingList? { _ = revision; return try? repo.shoppingList(id: id) }
+    /// The stored name of a list's category (Groceries when it has none).
+    func categoryName(ofList id: Int64) -> String {
+        guard let categoryId = list(id)?.categoryId else { return ShoppingRepository.trackedCategory }
+        return categories.first { $0.id == categoryId }?.name ?? ShoppingRepository.trackedCategory
+    }
     func items(_ listId: Int64) -> [ShoppingItem] { _ = revision; return (try? repo.items(listId: listId)) ?? [] }
     func photos(_ listId: Int64) -> [Photo] { _ = revision; return (try? repo.photos(listId: listId)) ?? [] }
     func report(_ id: Int64) -> AiReport? { _ = revision; return try? database.report(id: id) }
@@ -144,6 +153,7 @@ final class AppModel {
         static let onboarding = "onboarding.step"
         static let instructions = "ai_instructions."
         static let devOptions = "dev_options.shown"
+        static let libraryAllCategories = "library_all_categories_done"
     }
 
     /// Whether the person agreed to send AI requests (asked once; Settings → AI features).

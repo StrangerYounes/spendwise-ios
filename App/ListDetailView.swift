@@ -421,7 +421,7 @@ struct AddItemsSheet: View {
 
     var body: some View {
         let storeId = model.list(listId)?.storeId
-        let suggestions = (try? model.repo.suggestions(name, listStoreId: storeId)) ?? []
+        let suggestions = (try? model.repo.suggestions(name, listStoreId: storeId, listCategory: model.categoryName(ofList: listId))) ?? []
         VStack(spacing: 0) {
             SheetCloseBar { dismiss() }
             ScrollView {
@@ -551,7 +551,7 @@ struct ItemEditorSheet: View {
     @State private var loaded = false
 
     var body: some View {
-        let suggestions = nameEdited ? Array(((try? model.repo.suggestions(name, listStoreId: model.list(item.listId)?.storeId)) ?? []).prefix(4)) : []
+        let suggestions = nameEdited ? Array(((try? model.repo.suggestions(name, listStoreId: model.list(item.listId)?.storeId, listCategory: model.categoryName(ofList: item.listId))) ?? []).prefix(4)) : []
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {

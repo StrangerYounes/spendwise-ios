@@ -11,7 +11,8 @@ private enum LibrarySort: CaseIterable { case name, mostBought, recent
     }
 }
 
-/// Items (FEATURES.md §4.3): everything ever bought, and the Groceries library with per-store prices.
+/// Items (FEATURES.md §4.3): everything ever bought, and the library with per-store prices (every
+/// category feeds it since 27 Oct 2026); both filter by category.
 struct LibraryView: View {
     @Environment(AppModel.self) private var model
     @Environment(Router.self) private var router
@@ -28,13 +29,16 @@ struct LibraryView: View {
         let categoryNames = Array(Set(summaries.compactMap(\.categoryName))).sorted()
         let q = query.trimmingCharacters(in: .whitespaces).lowercased()
         let visible = sorted(summaries.filter { (q.isEmpty || $0.name.lowercased().contains(q)) && (categoryFilter == nil || $0.categoryName == categoryFilter) })
-        let masters = sortedMasters((q.isEmpty ? model.masterItems : ((try? model.repo.searchMasterItems(q)) ?? [])))
+        // A library item's category: the latest list it was bought in (Groceries when never bought)
+        let categoryOf = Dictionary(summaries.map { ($0.name.lowercased(), $0.categoryName ?? ShoppingRepository.trackedCategory) }, uniquingKeysWith: { a, _ in a })
+        let masters = sortedMasters((q.isEmpty ? model.masterItems : ((try? model.repo.searchMasterItems(q)) ?? []))
+            .filter { categoryFilter == nil || (categoryOf[$0.name.lowercased()] ?? ShoppingRepository.trackedCategory) == categoryFilter })
 
         ScrollView {
             LazyVStack(spacing: 8) {
                 Picker("", selection: $groceryPrices) {
                     Text(L("all_items")).tag(false)
-                    Text(L("grocery_prices")).tag(true)
+                    Text(L("prices_tab")).tag(true)
                 }
                 .pickerStyle(.segmented)
                 HStack(spacing: 10) {
@@ -48,13 +52,13 @@ struct LibraryView: View {
                 .padding(.horizontal, 18).frame(height: 52)
                 .background(Palette.containerHigh, in: Capsule())
                 chips(LibrarySort.allCases.map { option -> (String, Bool, () -> Void) in (option.label, option == sort, { sort = option }) })
+                if categoryNames.count > 1 {
+                    let all: (String, Bool, () -> Void) = (L("all_categories"), categoryFilter == nil, { categoryFilter = nil })
+                    chips([all] + categoryNames.map { name -> (String, Bool, () -> Void) in
+                        (categoryLabel(name), categoryFilter == name, { categoryFilter = categoryFilter == name ? nil : name })
+                    })
+                }
                 if !groceryPrices {
-                    if categoryNames.count > 1 {
-                        let all: (String, Bool, () -> Void) = (L("all_categories"), categoryFilter == nil, { categoryFilter = nil })
-                        chips([all] + categoryNames.map { name -> (String, Bool, () -> Void) in
-                            (categoryLabel(name), categoryFilter == name, { categoryFilter = categoryFilter == name ? nil : name })
-                        })
-                    }
                     if visible.isEmpty {
                         EmptyState(icon: "shippingbox", title: L(summaries.isEmpty ? "nothing_bought" : "no_matches"),
                                    message: L(summaries.isEmpty ? "nothing_bought_sub" : "no_item_matches"))
@@ -64,8 +68,12 @@ struct LibraryView: View {
                     }
                 } else {
                     if masters.isEmpty {
-                        EmptyState(icon: "shippingbox", title: L(query.isEmpty ? "library_empty" : "no_matches"),
-                                   message: query.isEmpty ? L("library_empty_sub") : L("no_library_match", query))
+                        if model.masterItems.isEmpty {
+                            EmptyState(icon: "shippingbox", title: L("library_empty"), message: L("library_empty_sub"))
+                        } else {
+                            EmptyState(icon: "shippingbox", title: L("no_matches"),
+                                       message: query.isEmpty ? L("no_item_matches") : L("no_library_match", query))
+                        }
                     }
                     ForEach(masters) { m in
                         Button { detail = m } label: { MasterRow(item: m, currency: model.currency) }.buttonStyle(.plainRow)

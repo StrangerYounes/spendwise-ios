@@ -37,6 +37,14 @@ join, remove, leave, close).
 | Price box: + − × ÷ insert at the cursor | They're added at the end of the box (SwiftUI on iOS 17 has no cursor position) |
 | Play Billing (none yet) | No App Store subscription yet either; Upgrade says it's coming |
 
+## Changes beyond the Android app (27 Oct 2026; the Android agent has the same prompt)
+- Default categories on fresh installs: Groceries, Gifts, Car, Miscellaneous (stored in English,
+  shown translated via `AppDatabase.defaultCategoryKey`; only Groceries is fixed).
+- Every category feeds the item library (was Groceries only): the Prices tab filters by category,
+  add-item suggestions put the list's category first, and a one-time catch-up
+  (`catchUpLibraryWithAllCategories`, flag `library_all_categories_done`) adds names bought in
+  other categories before this change.
+
 ## Android bugs found while porting
 1. `and_separator` is `" and "` in strings.xml (Arabic `" و "`), but Android trims the spaces, so
    the AI report preview reads "Looks at: spendingandprice trends". Fix: ` and ` as done

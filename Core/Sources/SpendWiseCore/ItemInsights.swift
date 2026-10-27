@@ -89,8 +89,10 @@ public struct ItemSuggestion: Hashable, Sendable {
 }
 
 public extension ShoppingRepository {
-    /// Suggestions for what's typed in Add items, up to 8, names starting with it first.
-    func suggestions(_ rawQuery: String, listStoreId: Int64?) throws -> [ItemSuggestion] {
+    /// Suggestions for what's typed in Add items, up to 8: things last bought in the list's category
+    /// first (so "G" in Groceries offers Garlic before Gas), then names starting with it, then the
+    /// most bought.
+    func suggestions(_ rawQuery: String, listStoreId: Int64?, listCategory: String? = nil) throws -> [ItemSuggestion] {
         let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         if query.isEmpty { return [] }
         let history = try searchItemNames(query)
@@ -108,7 +110,11 @@ public extension ShoppingRepository {
         let fromHistory = history.filter { !known.contains($0.name.lowercased()) }
             .map { ItemSuggestion(name: $0.name, timesBought: $0.timesUsed, lastPrice: $0.lastPrice, lastUnit: $0.lastUnit) }
         let q = query.lowercased()
+        let categories = listCategory == nil ? [:] : try database.latestCategories(matching: query)
+        func inCategory(_ s: ItemSuggestion) -> Bool { listCategory == nil || (categories[s.name.lowercased()] ?? ShoppingRepository.trackedCategory) == listCategory }
         return (fromLibrary + fromHistory).enumerated().sorted { a, b in
+            let c = inCategory(a.element), d = inCategory(b.element)
+            if c != d { return c }
             let x = !a.element.name.lowercased().hasPrefix(q), y = !b.element.name.lowercased().hasPrefix(q)
             if x != y { return !x }
             if a.element.timesBought != b.element.timesBought { return a.element.timesBought > b.element.timesBought }

@@ -255,8 +255,8 @@ final class SyncStoreTests: XCTestCase {
         try database.updateStore(Store(id: id, name: "Spinneys Achrafieh", uid: uid))
         XCTAssertEqual(try store.waitingCount(), 0)
         try store.catchUp(now: 42)
-        // Groceries was never uploaded either
-        XCTAssertEqual(try store.pending().map(\.table), ["stores", "categories"])
+        // The default categories were never uploaded either
+        XCTAssertEqual(try store.pending().map(\.table), ["stores"] + Array(repeating: "categories", count: AppDatabase.defaultCategories.count))
         XCTAssertEqual(try store.tombstones(), [Tombstone(table: "stores", uid: "gone", deletedAt: 42)])
     }
 

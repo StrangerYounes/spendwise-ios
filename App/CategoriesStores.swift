@@ -17,16 +17,15 @@ struct CategoriesSheet: View {
         let categories = model.categories.sorted { ($0.name != "Groceries" ? 1 : 0) < ($1.name != "Groceries" ? 1 : 0) }
         NavigationStack {
             List {
-                Text(L("groceries_only_hint")).font(.bodyS).foregroundStyle(Palette.onSurfaceVariant).listRowBackground(Color.clear)
                 ForEach(categories) { c in
                     HStack(spacing: 16) {
                         ColorDot(color: Color(argb: c.color), size: 16)
                         Text(categoryLabel(c.name)).foregroundStyle(Palette.onSurface).frame(maxWidth: .infinity, alignment: .leading)
                         Button { editing = c } label: { Image(systemName: "pencil") }.buttonStyle(.borderless)
-                            .accessibilityLabel(L("edit_named", c.name))
+                            .accessibilityLabel(L("edit_named", categoryLabel(c.name)))
                         if c.name != "Groceries" {
                             Button {
-                                confirm = Confirm(title: L("delete_named_q", c.name), message: L("category_delete_body"), label: L("delete")) {
+                                confirm = Confirm(title: L("delete_named_q", categoryLabel(c.name)), message: L("category_delete_body"), label: L("delete")) {
                                     model.perform { try model.repo.deleteCategory(c) }
                                 }
                             } label: { Image(systemName: "trash").foregroundStyle(Palette.error) }
@@ -75,6 +74,15 @@ private struct CategoryEditor: View {
     @Environment(\.dismiss) private var dismiss
     let category: SpendWiseCore.Category?
     let save: (String, Int32) -> Void
+
+    /// What to store: Groceries stays Groceries; a default saved under its shown name keeps its
+    /// English name (so it still syncs and merges); anything typed is stored as typed.
+    private var storedName: String {
+        let typed = name.trimmingCharacters(in: .whitespaces)
+        guard let original = category?.name else { return typed }
+        if original == ShoppingRepository.trackedCategory { return original }
+        return typed == categoryLabel(original) ? original : typed
+    }
     @State private var name = ""
     @State private var color: Int32 = presetColors[0]
     @State private var custom = Color.green
@@ -116,7 +124,7 @@ private struct CategoryEditor: View {
                 ToolbarItem(placement: .cancellationAction) { Button(L("cancel")) { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L("save")) {
-                        save(isGroceries ? "Groceries" : name.trimmingCharacters(in: .whitespaces), color)
+                        save(storedName, color)
                         dismiss()
                     }
                     .disabled(!isGroceries && name.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -126,7 +134,8 @@ private struct CategoryEditor: View {
         .onAppear {
             guard !loaded else { return }
             loaded = true
-            name = category?.name ?? ""
+            // A default category shows its name in the app's language
+            name = category.map { categoryLabel($0.name) } ?? ""
             color = category?.color ?? presetColors[0]
             custom = Color(argb: color)
             showCustom = category != nil && !presetColors.contains(color)

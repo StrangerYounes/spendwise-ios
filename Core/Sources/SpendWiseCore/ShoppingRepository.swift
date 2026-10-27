@@ -5,7 +5,8 @@ public final class ShoppingRepository {
     public let database: AppDatabase
     var db: SQLiteDB { database.db }
 
-    /// Only lists in this category (or with no category) feed the item library.
+    /// The built-in category: lists with no category count as it, and it can't be renamed.
+    /// (Until 27 Oct 2026 it was also the only one feeding the item library; now all do.)
     public static let trackedCategory = "Groceries"
 
     /// Colours for categories created by quick add, picked in order, skipping used ones.
@@ -319,18 +320,14 @@ public final class ShoppingRepository {
         }
     }
 
-    /// Counts a newly bought grocery item in the library (and its store's price).
-    private func updateMasterItem(from shoppingItem: ShoppingItem) throws {
+    /// Counts a newly bought item in the library (and its store's price), whatever its category.
+    private func updateMasterItem(from shoppingItem: ShoppingItem, at boughtAt: Millis? = nil) throws {
         guard let shoppingList = try database.shoppingList(id: shoppingItem.listId) else { return }
-        // Only Groceries (or no category) feeds the library
-        let category = try shoppingList.categoryId.flatMap { try database.category(id: $0) }
-        let categoryName = category?.name ?? Self.trackedCategory
-        guard categoryName == Self.trackedCategory else { return }
 
         let name = shoppingItem.itemName
         let unitPrice = shoppingItem.actualPrice ?? shoppingItem.estimatedPrice ?? 0
         let qty = shoppingItem.quantity
-        let date = now()
+        let date = boughtAt ?? now()
         let effectiveStoreId = shoppingItem.storeId ?? shoppingList.storeId
 
         let masterId: Int64
@@ -363,6 +360,25 @@ public final class ShoppingRepository {
             try database.insertStorePrice(StoreItemPrice(masterItemId: masterId, storeId: storeId, lastPrice: unitPrice,
                                                          lowestPrice: unitPrice, highestPrice: unitPrice, lastUpdated: date))
         }
+    }
+
+    /// Once per install: until 27 Oct 2026 only Groceries fed the library, so things bought in other
+    /// categories were never counted. Adds those names (oldest purchase first, each with its own
+    /// date and store price); names already in the library are left alone, so a second phone on
+    /// the same account counts nothing twice. Returns how many names were added.
+    @discardableResult
+    public func catchUpLibraryWithAllCategories() throws -> Int {
+        var added = Set<String>()
+        try database.db.transaction {
+            let known = Set(try database.allMasterItems().map { $0.name.lowercased() })
+            for (item, date) in try database.purchasedOutsideGroceries() {
+                let key = item.itemName.lowercased()
+                guard !known.contains(key) else { continue }
+                try updateMasterItem(from: item, at: date)
+                added.insert(key)
+            }
+        }
+        return added.count
     }
 
     // MARK: - Photos

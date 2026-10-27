@@ -119,7 +119,7 @@
 "consent_intro" = "تستخدم الإضافة السريعة وقراءة الإيصالات وتقارير الذكاء الاصطناعي نموذج Gemini من Google. في كل مرة تستخدم إحداها، يرسل SpendWise ما يحتاجه الطلب إلى Gemini عبر خادمنا:";
 "consent_names" = "أسماء فئاتك ومتاجرك وأصنافك وقوائمك المفتوحة";
 "consent_never" = "لا يُرسل اسمك أو بريدك الإلكتروني أو حسابك إلى الذكاء الاصطناعي أبدًا.";
-"consent_photo" = "صورة الإيصال التي تختارها";
+"consent_photo" = "صور الإيصال التي تختارها";
 "consent_title" = "استخدام الذكاء الاصطناعي؟";
 "consent_typed" = "ما كتبته، أو ملاحظتك الصوتية";
 "contact" = "تواصل معنا";
@@ -135,6 +135,9 @@
 "currency_symbol" = "رمز العملة";
 "custom_colour" = "لون مخصّص…";
 "daily" = "يوميًا";
+"default_category_car" = "السيارة";
+"default_category_gifts" = "هدايا";
+"default_category_misc" = "متفرقات";
 "delete" = "حذف";
 "delete_account" = "حذف الحساب";
 "delete_account_body" = "يمحو هذا كل ما في حسابك وبيانات تسجيل الدخول نفسها. تتوقف المزامنة على الهواتف الأخرى المسجّلة فيه. تبقى القوائم على هذا الهاتف، ويمكنك حفظ نسخة احتياطية منها في ملف.";
@@ -382,6 +385,7 @@
 "price_per_unit" = "السعر لكل وحدة";
 "price_range" = "النطاق %1$@ – %2$@";
 "price_trend" = "اتجاه السعر";
+"prices_tab" = "الأسعار";
 "privacy_policy" = "سياسة الخصوصية";
 "privacy_policy_sub" = "ما يبقى على هذا الهاتف، وما يذهب إلى خوادمنا وإلى الذكاء الاصطناعي";
 "purchase_history" = "سجل الشراء";
@@ -462,6 +466,7 @@
 "search" = "بحث";
 "search_items" = "ابحث في الأصناف";
 "search_lists" = "ابحث في القوائم والأصناف";
+"search_lists_header" = "القوائم";
 "see_premium" = "اطّلع على Premium";
 "select_date_range" = "اختر الفترة";
 "selected" = "محدّد";
@@ -623,11 +628,11 @@
 "receipt_uses_scans#many" = "يستخدم %1$ld عملية مسح، واحدة لكل صورة";
 "receipt_uses_scans#other" = "يستخدم %1$ld عملية مسح، واحدة لكل صورة";
 "restored_skipped#zero" = "\\";
-"restored_skipped#one" = "(قائمة واحدة كانت موجودة)";
-"restored_skipped#two" = "(قائمتان كانتا موجودتين)";
-"restored_skipped#few" = "(%1$ld قوائم كانت موجودة)";
-"restored_skipped#many" = "(%1$ld قائمة كانت موجودة)";
-"restored_skipped#other" = "(%1$ld قائمة كانت موجودة)";
+"restored_skipped#one" = " (قائمة واحدة كانت موجودة)";
+"restored_skipped#two" = " (قائمتان كانتا موجودتين)";
+"restored_skipped#few" = " (%1$ld قوائم كانت موجودة)";
+"restored_skipped#many" = " (%1$ld قائمة كانت موجودة)";
+"restored_skipped#other" = " (%1$ld قائمة كانت موجودة)";
 "saved_lists#zero" = "لم تُحفظ أي قائمة";
 "saved_lists#one" = "حُفظت قائمة واحدة";
 "saved_lists#two" = "حُفظت قائمتان";

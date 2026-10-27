@@ -394,10 +394,11 @@ public final class BackupRepository {
     }
 
     static func rebuildTotalQuantities(_ b: BackupData) -> [String: Double] {
+        // Every category feeds the library (since 27 Oct 2026; before, only Groceries)
         guard let lists = b.shoppingLists else { return [:] }
-        let tracked = Set(lists.filter { $0.categoryName == nil || $0.categoryName == ShoppingRepository.trackedCategory }.map(\.id))
+        let known = Set(lists.map(\.id))
         var out: [String: Double] = [:]
-        for i in b.shoppingItems ?? [] where i.purchased && tracked.contains(i.listId) { out[i.itemName, default: 0] += i.quantity }
+        for i in b.shoppingItems ?? [] where i.purchased && known.contains(i.listId) { out[i.itemName, default: 0] += i.quantity }
         return out
     }
 }

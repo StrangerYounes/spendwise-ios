@@ -28,6 +28,11 @@ Each line: where, what to do, what you should see. Android's behaviour is the re
   and Finish shopping (Got it). Leaving the list ends the guide.
 - **I've used SpendWise before** → Settings.
 
+### Categories
+- A fresh install has Groceries, Gifts, Car and Miscellaneous (Arabic: البقالة، هدايا، السيارة،
+  متفرقات). Gifts, Car and Miscellaneous can be renamed and deleted; Groceries only recoloured.
+  Saving one without changing its name keeps it working across languages and phones.
+
 ### Home
 - "Spent in <month>" card (opens Insights), the quick-add bar, search (results show items with
   their list), Active / Completed, list cards with category, date, store, progress, total.
@@ -49,7 +54,9 @@ Each line: where, what to do, what you should see. Android's behaviour is the re
 ### Items, item insights, Insights
 - Items → All items (category filter, sort A–Z / Most bought / Recent) → an item → its insights
   (tiles, price chart by date, purchases, Rename everywhere; onto an existing name it combines).
-- Grocery prices tab: library items with per-store prices; Edit, Delete, Merge, add one with +.
+- Prices tab: library items from every category with per-store prices, the same category chips
+  as All items; Edit, Delete, Merge, add one with +. Buying something in a Car or Gifts list
+  adds it here too; when adding items, things from the list's own category are suggested first.
 - Insights: KPIs, bars per month (tap a bar), category donut (tap a slice or row: it opens to the
   lists behind it; a list opens), stores, biggest purchases, top items, date filter (calendar icon).
 

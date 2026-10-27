@@ -185,7 +185,7 @@ public struct DigestWords: Sendable {
         w.vsPrevious = { str("fact_vs_previous", $0) }
         w.before = { str("fact_before", $0) }
         w.ofSpending = { str("fact_of_spending", $0) }
-        w.category = { $0 == "Groceries" ? str("groceries") : $0 }
+        w.category = { AppDatabase.defaultCategoryKey($0).map { str($0) } ?? $0 }
         w.basedOn = { p, i in str("based_on", plural("purchases_n", p), plural("items_count", i)) }
         return w
     }

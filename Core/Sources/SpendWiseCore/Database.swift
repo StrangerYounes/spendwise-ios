@@ -10,14 +10,37 @@ public final class AppDatabase {
     /// Groceries' colour (#4CAF50), as Android seeds it.
     public static let groceriesColor: Int32 = -12537232
 
+    /// The categories a fresh install starts with. Stored in English (they sync, back up and merge
+    /// by name on every phone) and shown in the app's language; only Groceries is fixed.
+    public static let defaultCategories: [(name: String, color: Int32)] = [
+        ("Groceries", groceriesColor),
+        ("Gifts", Int32(bitPattern: 0xFFE91E63)),
+        ("Car", Int32(bitPattern: 0xFF03A9F4)),
+        ("Miscellaneous", Int32(bitPattern: 0xFF607D8B)),
+    ]
+
+    /// The string key that shows a default category in the app's language (nil: shown as named;
+    /// a renamed default is an ordinary category).
+    public static func defaultCategoryKey(_ name: String) -> String? {
+        switch name {
+        case "Groceries": return "groceries"
+        case "Gifts": return "default_category_gifts"
+        case "Car": return "default_category_car"
+        case "Miscellaneous": return "default_category_misc"
+        default: return nil
+        }
+    }
+
     /// Opens (or creates) the database at [path]; ":memory:" for tests.
     public init(path: String) throws {
         db = try SQLiteDB(path: path)
         if db.userVersion == 0 {
             try db.transaction {
                 for sql in Self.schema { try db.execute(sql) }
-                // Fresh installs start with Groceries, as on Android
-                try db.run("INSERT INTO `categories` (`name`, `color`) VALUES ('Groceries', ?)", [Int64(Self.groceriesColor)])
+                // Fresh installs start with the default categories (existing installs keep theirs)
+                for c in Self.defaultCategories {
+                    try db.run("INSERT INTO `categories` (`name`, `color`) VALUES (?, ?)", [c.name, Int64(c.color)])
+                }
             }
             db.userVersion = Self.version
         }
@@ -287,6 +310,36 @@ public final class AppDatabase {
             """, named: ["query": query]).map { r in
                 ItemNameSuggestion(name: r.string("name"), timesUsed: Int(r.int("timesUsed")), lastPrice: r.doubleOrNil("lastPrice"), lastUnit: r.stringOrNil("lastUnit"))
             }
+    }
+
+    /// The category (name, Groceries when none) of the latest list each item name matching [query]
+    /// was in, by lower-cased name: what "this item's category" means for the library.
+    public func latestCategories(matching query: String = "") throws -> [String: String] {
+        var out: [String: String] = [:]
+        for r in try db.query("""
+            SELECT si.itemName AS name, COALESCE(c.name, 'Groceries') AS category
+            FROM shopping_items si
+            JOIN shopping_lists sl ON sl.id = si.listId
+            LEFT JOIN categories c ON c.id = sl.categoryId
+            WHERE si.itemName LIKE '%' || :query || '%'
+            ORDER BY COALESCE(sl.completedDate, sl.createdDate), si.id
+            """, named: ["query": query]) {
+            out[r.string("name").lowercased()] = r.string("category")
+        }
+        return out
+    }
+
+    /// Bought items from lists outside Groceries, oldest first (the library's one-time catch-up).
+    public func purchasedOutsideGroceries() throws -> [(item: ShoppingItem, date: Millis)] {
+        let rows = try db.query("""
+            SELECT si.id AS id, COALESCE(sl.completedDate, sl.createdDate) AS date
+            FROM shopping_items si
+            JOIN shopping_lists sl ON sl.id = si.listId
+            JOIN categories c ON c.id = sl.categoryId
+            WHERE si.purchased = 1 AND c.name != 'Groceries'
+            ORDER BY date, si.id
+            """)
+        return try rows.compactMap { r in try item(id: r.int("id")).map { ($0, r.int("date")) } }
     }
 
     /// The most recent price recorded for an item name, ignoring case and stray spaces.

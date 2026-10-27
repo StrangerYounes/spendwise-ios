@@ -120,7 +120,7 @@
 "consent_intro" = "Quick add, receipt reading and AI reports use Google's Gemini AI. Each time you use one, SpendWise sends what that request needs to Gemini, through our server:";
 "consent_names" = "the names of your categories, stores, items and open lists";
 "consent_never" = "Your name, email and account are never sent to the AI.";
-"consent_photo" = "the receipt photo you choose";
+"consent_photo" = "the receipt photos you choose";
 "consent_title" = "Use the AI?";
 "consent_typed" = "what you typed, or your voice note";
 "contact" = "Contact";
@@ -136,6 +136,9 @@
 "currency_symbol" = "Currency symbol";
 "custom_colour" = "Custom colour…";
 "daily" = "Daily";
+"default_category_car" = "Car";
+"default_category_gifts" = "Gifts";
+"default_category_misc" = "Miscellaneous";
 "delete" = "Delete";
 "delete_account" = "Delete account";
 "delete_account_body" = "This erases everything kept in your account and the sign-in itself. Other phones signed in to it stop syncing. The lists on this phone stay, and can still be backed up to a file.";
@@ -383,6 +386,7 @@
 "price_per_unit" = "Price per unit";
 "price_range" = "Range %1$@ – %2$@";
 "price_trend" = "Price trend";
+"prices_tab" = "Prices";
 "privacy_policy" = "Privacy policy";
 "privacy_policy_sub" = "What stays on this phone, what goes to our servers and to the AI";
 "purchase_history" = "Purchase history";
@@ -463,6 +467,7 @@
 "search" = "Search";
 "search_items" = "Search items";
 "search_lists" = "Search lists and items";
+"search_lists_header" = "Lists";
 "see_premium" = "See Premium";
 "select_date_range" = "Select Date Range";
 "selected" = "Selected";
@@ -583,8 +588,8 @@
 "purchases_n#other" = "%1$ld purchases";
 "receipt_uses_scans#one" = "Uses 1 receipt scan";
 "receipt_uses_scans#other" = "Uses %1$ld receipt scans, one per photo";
-"restored_skipped#one" = "(%1$ld list already existed)";
-"restored_skipped#other" = "(%1$ld lists already existed)";
+"restored_skipped#one" = " (%1$ld list already existed)";
+"restored_skipped#other" = " (%1$ld lists already existed)";
 "saved_lists#one" = "Saved %1$ld list";
 "saved_lists#other" = "Saved %1$ld lists";
 "sign_out_waiting#one" = "%1$ld change on this phone hasn't reached your account yet and won't be synced.";
