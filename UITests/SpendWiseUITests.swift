@@ -129,13 +129,16 @@ final class SpendWiseUITests: XCTestCase {
         let category = app.buttons.matching(identifier: "categoryRow").firstMatch
         for _ in 0..<8 where !(category.exists && category.isHittable) { app.swipeUp() }
         XCTAssertTrue(category.waitForExistence(timeout: 3))
-        // Bring the row up from the bottom edge so the lists it opens have room
+        // Bring the row up from the bottom edge so the lists it opens have room. A tap while the
+        // scroll still glides only stops it, so let it settle first
         app.swipeUp()
+        Thread.sleep(forTimeInterval: 1.5)
         category.tap()
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label ENDSWITH 'Hide lists'")).firstMatch.waitForExistence(timeout: 5))
         // The lists behind the biggest category (Car: the gas fill-ups) show under it, and one opens
         let list = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Gas fill-up'")).firstMatch
-        for _ in 0..<4 where !(list.exists && list.isHittable) { app.swipeUp() }
-        XCTAssertTrue(list.waitForExistence(timeout: 3))
+        XCTAssertTrue(list.waitForExistence(timeout: 5))
+        if !list.isHittable { app.swipeUp(); Thread.sleep(forTimeInterval: 1.5) }
         list.tap()
         XCTAssertTrue(app.buttons["listTitle"].waitForExistence(timeout: 5))
     }
