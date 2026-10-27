@@ -1,11 +1,13 @@
 # SpendWise iOS: handoff (updated 27 Oct 2026)
 
 ## Status (27 Oct): done, all green
-Run 40477432042 passed everything: Core 132 tests (Linux + macOS), 11 UI flows, 55 backend checks
-(AI, allowances, receipts + note + own instructions + follow-up, reports, two-phone sync), 120
-screenshots (EN/AR light + dark) reviewed. Repo is **private**. Screenshots of runs 3, 4 and 11 are
-in `screenshots/` (gitignored). Next: whatever the user asks; Android bugs found are in PLAN.md
-(not yet fixed in the Android repo). For a new CI round: public, push, watch, private again.
+Run 40491927009 passed everything: Core 135 tests, 11 UI flows, 55 backend checks, 120 screenshots.
+It added default categories (Groceries, Gifts, Car, Miscellaneous), the item library fed by every
+category (Prices tab with category chips, one-time catch-up), and generic names instead of real
+stores/brands/places in hints, sample data and prompts. Repo is **private**. Screenshots per run
+in `screenshots/` (gitignored). The Android agent got the same tasks (prompt in the 27 Oct chat):
+its strings feed scripts/convert_strings.py; iOS overrides qa_example/ai_instructions_quick_hint
+until Android changes them. For a new CI round: public, push, watch, private again.
 
 ## Commits
 Everything is committed and pushed.
