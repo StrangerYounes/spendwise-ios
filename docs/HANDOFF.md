@@ -1,21 +1,11 @@
-# SpendWise iOS: handoff (26 Oct 2026, written before a context compaction)
+# SpendWise iOS: handoff (updated 27 Oct 2026)
 
-## FIRST (27 Oct): check run 40332146549, then finish
-State on 26 Oct evening: the app builds; run 6 (40325996166) passed every backend check (55/55:
-AI, allowances, receipts + note + own instructions + follow-up, reports, two-phone sync) and every
-UI test but one (Insights category, a test-scrolling problem). Run 7 (40332146549) carries that
-test fix but was CANCELLED (the handoff push cancelled it via the workflow concurrency group, and that push's run was cancelled too): rerun it with `gh run rerun 40332146549 -R StrangerYounes/spendwise-ios` after making the repo public. Repo is **private** now.
-1. `gh run view 40332146549 -R StrangerYounes/spendwise-ios --json conclusion,jobs`. If the UI test
-   still fails: make the repo public (`-f visibility=public`), fix, push, watch, then private again.
-2. When green: `gh run download <id> -R StrangerYounes/spendwise-ios -n screenshots` into
-   `~/Documents/Dev/SpendWise-iOS-builds/2026-10-27-run-<id>/` and copy the PNGs to
-   `screenshots/<date>-run-<id>/app/` in this repo (the user asked for every CI run's shots there;
-   gitignored). Run 3 and run 4 are already there. Review new shots (contact sheets).
-3. Make sure the repo is private, then give the user the final report: what was verified (Core
-   132 tests; 12 UI flows; 55 backend checks; 120 screenshots EN/AR light + dark reviewed), what
-   was fixed along the way, Android bugs found (PLAN.md: and_separator, qa_heard spaces, the
-   anonymous sign-in race, hardcoded "Lists"), and what needs a real iPhone (docs/TESTING.md).
-   Offer to report the Android bugs/fix them in the Android repo.
+## Status (27 Oct): done, all green
+Run 40477432042 passed everything: Core 132 tests (Linux + macOS), 11 UI flows, 55 backend checks
+(AI, allowances, receipts + note + own instructions + follow-up, reports, two-phone sync), 120
+screenshots (EN/AR light + dark) reviewed. Repo is **private**. Screenshots of runs 3, 4 and 11 are
+in `screenshots/` (gitignored). Next: whatever the user asks; Android bugs found are in PLAN.md
+(not yet fixed in the Android repo). For a new CI round: public, push, watch, private again.
 
 ## Commits
 Everything is committed and pushed.
@@ -39,7 +29,7 @@ what was seen in logs/screenshots (show some), verified vs not, then the elapsed
   `Strings.swift` (in-app language, `L()`/`P()` Android-style plurals `key#one`…), `Cloud/`
   (Cloud = account/plan/family, AiGateway, CloudSync, BackendTest), `DemoMode`/`DemoData`
   (launch args `-SpendWiseDemo YES -SpendWiseScreen <name>`), `TestDriver` (`-SpendWiseTest <role>`).
-- `UITests/` XCUITest (12 flows). `firebase/` Android rules+functions for CI emulators only (no
+- `UITests/` XCUITest (11 flows). `firebase/` Android rules+functions for CI emulators only (no
   .firebaserc). `scripts/`: convert_strings.py + ios-strings.json, screenshots.sh,
   backend-test.sh, backend_check.py, fake-gemini.cjs (NODE_OPTIONS preload stubbing Gemini).
 - Firebase: iOS app registered in spendwise-unes (`1:517582004920:ios:db48257d69fa67c2c88a4d`,

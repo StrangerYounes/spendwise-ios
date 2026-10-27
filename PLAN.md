@@ -45,7 +45,9 @@ join, remove, leave, close).
 2. `AiGateway.ensureAccount()` can finish an anonymous sign-in after a Google sign-in (turning on
    the AI starts it; signing in right away races it) and replace the Google account. iOS shares one
    account check and makes sign-in wait for it (found by the two-phone CI test).
-3. Home's search results show a fixed English "Lists" header (no string resource), also in Arabic.
+3. (iOS only) SwiftUI's plain button style ignored taps between a row's texts (Insights category
+   rows); every plain button now uses a whole-frame style.
+4. Home's search results show a fixed English "Lists" header (no string resource), also in Arabic.
    iOS shows «القوائم» in Arabic.
 
 ## Testing
