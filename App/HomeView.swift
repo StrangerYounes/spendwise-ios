@@ -272,7 +272,7 @@ struct MonthCard: View {
             .padding(20)
             .background(Palette.primary, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.plainRow)
         .accessibilityIdentifier("monthCard")
     }
 }
@@ -323,7 +323,7 @@ struct ItemSearchRow: View {
             .padding(.horizontal, 16).padding(.vertical, 12)
             .card(Palette.containerLow, radius: 16)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.plainRow)
     }
 }
 
@@ -372,7 +372,7 @@ struct ListCard: View {
             .padding(.leading, 16).padding(.trailing, 4).padding(.top, 8).padding(.bottom, 16)
             .card(Palette.containerLow)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.plainRow)
         .accessibilityIdentifier("list_\(list.name)")
         // The ⋮ menu sits over the card, not inside its button, so its taps reach it
         .overlay(alignment: .topTrailing) {

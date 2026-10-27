@@ -126,7 +126,7 @@ private struct AskAiCard: View {
             .padding(16)
             .card(Palette.secondaryContainer)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.plainRow)
         .accessibilityIdentifier("askAi")
     }
 }
@@ -168,7 +168,7 @@ struct StatRow: View {
         .padding(.horizontal, 16).padding(.vertical, 12)
         .card(Palette.containerLow, radius: 16)
         if let open {
-            Button(action: open) { content }.buttonStyle(.plain)
+            Button(action: open) { content }.buttonStyle(.plainRow)
         } else {
             content
         }
@@ -284,7 +284,7 @@ private struct CategoryBreakdown: View {
                         .padding(8)
                         .background(isSelected ? Color(argb: s.categoryColor).opacity(0.15) : .clear, in: RoundedRectangle(cornerRadius: 10))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.plainRow)
                     .accessibilityIdentifier("categoryRow")
                     if isSelected {
                         CategoryLists(lists: lists.filter { $0.categoryId == s.categoryId }, color: Color(argb: s.categoryColor), currency: currency, open: openList)
@@ -334,7 +334,7 @@ private struct CategoryLists: View {
                     .padding(.vertical, 8)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.plainRow)
             }
         }
         .padding(.leading, 14).padding(.top, 2).padding(.bottom, 8)

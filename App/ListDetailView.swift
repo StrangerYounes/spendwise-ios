@@ -272,7 +272,7 @@ private struct SummaryCard: View {
                     .padding(.horizontal, 12).frame(height: 32)
                     .background(Palette.surface.opacity(0.6), in: RoundedRectangle(cornerRadius: 8))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.plainRow)
                 .accessibilityIdentifier("chooseStore")
                 Spacer()
                 if completed {
@@ -343,7 +343,7 @@ struct ItemRow: View {
                     .foregroundStyle(item.purchased ? Palette.primary : Palette.onSurfaceVariant)
                     .frame(width: 44, height: 44)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.plainRow)
             .accessibilityLabel(item.itemName)
             .accessibilityValue(item.purchased ? L("in_cart") : L("to_buy"))
             VStack(alignment: .leading, spacing: 2) {
@@ -378,7 +378,7 @@ struct ItemRow: View {
                     Button(action: delete) {
                         Image(systemName: "xmark").font(.system(size: 14, weight: .medium)).foregroundStyle(muted).frame(width: 40, height: 40)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.plainRow)
                     .accessibilityLabel(L("remove_named", item.itemName))
                 }
             }
@@ -455,7 +455,7 @@ struct AddItemsSheet: View {
                                 Button { add(s.name, s.suggestedPrice ?? parseAmount(price), s.lastUnit) } label: {
                                     SuggestionRow(suggestion: s, currency: model.currency)
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(.plainRow)
                             }
                         }
                         .card(Palette.containerHigh, radius: 16)
@@ -571,7 +571,7 @@ struct ItemEditorSheet: View {
                                     }
                                     .padding(.horizontal, 16).padding(.vertical, 10).contentShape(Rectangle())
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(.plainRow)
                             }
                         }
                         .card(Palette.containerHighest, radius: 16)

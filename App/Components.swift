@@ -242,7 +242,7 @@ struct AmountField: View {
                                 .foregroundStyle(Palette.onSecondaryContainer)
                                 .background(Palette.secondaryContainer, in: RoundedRectangle(cornerRadius: 10))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.plainRow)
                     }
                 }
                 .environment(\.layoutDirection, .leftToRight)

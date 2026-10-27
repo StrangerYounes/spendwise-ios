@@ -232,7 +232,7 @@ struct SettingsRow: View {
             .padding(.horizontal, 16).padding(.vertical, 12)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.plainRow)
     }
 }
 
@@ -425,7 +425,7 @@ struct AllowanceChip: View {
                 .foregroundStyle(left == 0 ? Palette.onErrorContainer : Palette.onSurfaceVariant)
                 .background(left == 0 ? Palette.errorContainer : Palette.containerHigh, in: Capsule())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.plainRow)
             .popover(isPresented: $open) {
                 Text(a.sentence(feature)).font(.bodyM).padding().frame(maxWidth: 260).presentationCompactAdaptation(.popover)
             }

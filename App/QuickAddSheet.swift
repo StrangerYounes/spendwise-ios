@@ -184,7 +184,7 @@ private struct ActionTile: View {
             .foregroundStyle(primary ? Palette.onPrimary : Palette.onSecondaryContainer)
             .background(primary ? Palette.primary : Palette.secondaryContainer, in: RoundedRectangle(cornerRadius: 20))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.plainRow)
     }
 }
 
@@ -346,7 +346,7 @@ private struct DraftContent: View {
                     .frame(maxWidth: .infinity, minHeight: 150)
                     .background(Palette.secondaryContainer, in: RoundedRectangle(cornerRadius: 16))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.plainRow)
             }
             // Keeps one photo from stretching across the whole sheet
             ForEach(0..<max(0, ReceiptReader.maxPhotos - draft.photos.count - (canAdd ? 1 : 0)), id: \.self) { _ in Color.clear.frame(maxWidth: .infinity, maxHeight: 1) }
@@ -384,7 +384,7 @@ private struct DraftContent: View {
                     .padding(.horizontal, 10).frame(height: 32)
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.outline))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.plainRow)
                 .padding(.top, 8)
                 .accessibilityLabel(L("delete"))
             }
@@ -442,7 +442,7 @@ private struct ReviewContent: View {
                     .padding(12)
                     .card(needsRate ? Palette.errorContainer : Palette.containerHigh, radius: 16)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.plainRow)
                 .accessibilityIdentifier("conversion")
             }
             // Until a rate is set, prices given in the other currency show as given, in it
@@ -559,7 +559,7 @@ private struct PurchaseCard: View {
                 Button { if !existing { fieldText = purchase.listName; editingName = true } } label: {
                     Text(existing ? L("add_to_list_named", purchase.listName) : purchase.listName).font(.titleM).foregroundStyle(Palette.onSurface).lineLimit(1)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.plainRow)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 // A total mixing unconverted prices with converted ones would mean nothing
                 let symbols = Set(purchase.items.filter { $0.unitPrice != nil }.map(symbol))
@@ -586,8 +586,8 @@ private struct PurchaseCard: View {
                         chip(nil, existingCategory == nil ? L("category_new", label) : categoryLabel(label), dot: Color(argb: existingCategory?.color ?? AppDatabase.groceriesColor))
                     }
                     Button { fieldText = purchase.storeName ?? ""; editingStore = true } label: { chip("storefront", purchase.storeName ?? L("add_store")) }
-                        .buttonStyle(.plain)
-                    Button { pickingDate = true } label: { chip("calendar", Dates.format(purchase.date, "EEEMMMd")) }.buttonStyle(.plain)
+                        .buttonStyle(.plainRow)
+                    Button { pickingDate = true } label: { chip("calendar", Dates.format(purchase.date, "EEEMMMd")) }.buttonStyle(.plainRow)
                 }
                 if !openLists.isEmpty || existing {
                     Menu {
@@ -619,7 +619,7 @@ private struct PurchaseCard: View {
                                         .foregroundStyle(Palette.onTertiaryContainer)
                                         .background(Palette.tertiaryContainer, in: RoundedRectangle(cornerRadius: 8))
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(.plainRow)
                                 Button { qa.dismissPack(purchase.id, item) } label: { Image(systemName: "xmark").font(.system(size: 12)).frame(width: 32, height: 32) }
                                     .accessibilityLabel(L("pack_not"))
                             }
@@ -739,7 +739,7 @@ private struct QuickItemSheet: View {
                                         .padding(.horizontal, 10).frame(height: 32)
                                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.outline))
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(.plainRow)
                             }
                         }
                     }

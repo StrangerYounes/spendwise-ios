@@ -98,6 +98,21 @@ extension View {
     }
 }
 
+/// SwiftUI's plain style answers only where the label draws: a row with a name on one side and an
+/// amount on the other ignored taps in between (Android's rows are clickable edge to edge).
+struct PlainRowButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .contentShape(Rectangle())
+            .opacity(configuration.isPressed ? 0.6 : 1)
+    }
+}
+
+extension ButtonStyle where Self == PlainRowButtonStyle {
+    /// Plain look, whole frame tappable. Use instead of `.plain`.
+    static var plainRow: PlainRowButtonStyle { PlainRowButtonStyle() }
+}
+
 /// Filled buttons (Material's FilledButton).
 struct FilledButtonStyle: ButtonStyle {
     var background: Color = Palette.primary

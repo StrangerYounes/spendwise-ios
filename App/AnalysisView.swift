@@ -157,7 +157,7 @@ struct AnalysisView: View {
                     Text(L("reports_saved_here")).font(.bodyM).foregroundStyle(Palette.onSurfaceVariant).padding(.horizontal, 4)
                 }
                 ForEach(reports) { r in
-                    Button { router.open(.report(r.id)) } label: { ReportRow(report: r) }.buttonStyle(.plain)
+                    Button { router.open(.report(r.id)) } label: { ReportRow(report: r) }.buttonStyle(.plainRow)
                 }
             }
             .padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 32)

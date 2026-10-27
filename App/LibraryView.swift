@@ -60,7 +60,7 @@ struct LibraryView: View {
                                    message: L(summaries.isEmpty ? "nothing_bought_sub" : "no_item_matches"))
                     }
                     ForEach(visible, id: \.name) { s in
-                        Button { router.open(.item(s.name)) } label: { SummaryRow(summary: s, currency: model.currency) }.buttonStyle(.plain)
+                        Button { router.open(.item(s.name)) } label: { SummaryRow(summary: s, currency: model.currency) }.buttonStyle(.plainRow)
                     }
                 } else {
                     if masters.isEmpty {
@@ -68,7 +68,7 @@ struct LibraryView: View {
                                    message: query.isEmpty ? L("library_empty_sub") : L("no_library_match", query))
                     }
                     ForEach(masters) { m in
-                        Button { detail = m } label: { MasterRow(item: m, currency: model.currency) }.buttonStyle(.plain)
+                        Button { detail = m } label: { MasterRow(item: m, currency: model.currency) }.buttonStyle(.plainRow)
                     }
                 }
             }
@@ -141,7 +141,7 @@ struct FilterChip: View {
             .background(selected ? Palette.secondaryContainer : .clear, in: RoundedRectangle(cornerRadius: 8))
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(selected ? .clear : Palette.outline, lineWidth: 1))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.plainRow)
     }
 }
 
