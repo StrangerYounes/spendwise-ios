@@ -14,6 +14,8 @@ import SpendWiseCore
 final class AiGateway {
     /// The last known allowance per feature (empty until refreshAllowances or a request answers).
     private(set) var allowances: [AiFeature: Allowance] = [:]
+    /// Bumped on every change, so a refresh that a request overtook doesn't put older counts back.
+    @ObservationIgnored private var allowanceVersion = 0
     @ObservationIgnored private weak var model: AppModel?
     @ObservationIgnored private weak var cloud: Cloud?
     @ObservationIgnored private var countsFor: String?
@@ -43,7 +45,7 @@ final class AiGateway {
     func current(_ f: AiFeature) -> Allowance? { allowances[f].flatMap { $0.isCurrent() ? $0 : nil } }
 
     /// For tests and screenshots.
-    func setAllowance(_ f: AiFeature, _ a: Allowance) { allowances[f] = a }
+    func setAllowance(_ f: AiFeature, _ a: Allowance) { allowances[f] = a; allowanceVersion += 1 }
 
     private var tzOffsetMin: Int { TimeZone.current.secondsFromGMT() / 60 }
 
@@ -61,6 +63,7 @@ final class AiGateway {
         do {
             try await ensureAccount()
             let asked = Auth.auth().currentUser?.uid
+            let version = allowanceVersion
             let callable = Cloud.functions.httpsCallable("aiAllowance")
             callable.timeoutInterval = 20
             let data: [String: Any] = ["tzOffsetMin": tzOffsetMin, "debugTier": debugTier, "lang": lang]
@@ -68,6 +71,8 @@ final class AiGateway {
             guard let features = (result.data as? [String: Any])?["features"] as? [String: Any] else { return }
             // Not if the account changed while asking
             guard asked == Auth.auth().currentUser?.uid else { return }
+            // Nor if a request brought newer counts meanwhile
+            guard version == allowanceVersion else { return }
             var next: [AiFeature: Allowance] = [:]
             for f in AiFeature.allCases { if let a = Allowance.from(features[f.id]) { next[f] = a } }
             allowances = next
@@ -107,6 +112,7 @@ final class AiGateway {
                 if code == .resourceExhausted, var a = allowances[feature] {
                     a.used = a.limit ?? a.used
                     allowances[feature] = a
+                    allowanceVersion += 1
                 }
                 throw AiError(message(for: ns), retryable: code.map { [FunctionsErrorCode.unavailable, .deadlineExceeded, .internal].contains($0) } ?? false)
             }
@@ -114,11 +120,11 @@ final class AiGateway {
             throw AiError(L("ai_offline"), retryable: true)
         }
         guard let map = result.data as? [String: Any] else { throw AiError(L("ai_empty"), retryable: true) }
-        if let a = Allowance.from(map["allowance"]) { allowances[feature] = a }
+        if let a = Allowance.from(map["allowance"]) { allowances[feature] = a; allowanceVersion += 1 }
         // Everything the request used: a receipt's note counts as a quick add, a follow-up is a quick add
         if let all = map["allowances"] as? [String: Any] {
             for (id, value) in all {
-                if let f = AiFeature(rawValue: id), let a = Allowance.from(value) { allowances[f] = a }
+                if let f = AiFeature(rawValue: id), let a = Allowance.from(value) { allowances[f] = a; allowanceVersion += 1 }
             }
         }
         guard let json = map["json"] as? String else { throw AiError(L("ai_empty"), retryable: true) }

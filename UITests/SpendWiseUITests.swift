@@ -95,9 +95,11 @@ final class SpendWiseUITests: XCTestCase {
         let app = launch("welcome")
         XCTAssertTrue(app.staticTexts["Welcome to SpendWise"].waitForExistence(timeout: 8))
         tapWhenReady(app.buttons["welcomeLanguage"])
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'SpendWise'")).firstMatch.waitForExistence(timeout: 5))
+        // The switch now offers English back; then the English title must be gone
+        let back = app.buttons.matching(NSPredicate(format: "identifier == 'welcomeLanguage' AND label CONTAINS 'English'")).firstMatch
+        XCTAssertTrue(back.waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["Welcome to SpendWise"].exists)
-        XCTAssertTrue(app.buttons["welcomeLanguage"].label.contains("English"))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'SpendWise'")).firstMatch.exists)
     }
 
     /// Arabic from the phone's language: Home reads right to left with Western digits.
