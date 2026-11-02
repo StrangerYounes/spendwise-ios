@@ -48,10 +48,13 @@ service cloud.firestore {
     }
 
     // A family's member entry carries the person's own email and name from their sign-in, so
-    // nobody can appear in the members list as someone else
+    // nobody can appear in the members list as someone else. Sign in with Apple may give no name
+    // (only on the very first sign-in) and a private relay email, or rarely no email: a sign-in
+    // without one must leave that field empty instead of writing anything it likes.
     function isMe(m) {
-      return m.email == request.auth.token.email
-        && (!('name' in request.auth.token) || m.name == request.auth.token.name || m.name == '');
+      let t = request.auth.token;
+      return (('email' in t) ? m.email == t.email : m.email == '')
+        && (('name' in t) ? (m.name == t.name || m.name == '') : m.name == '');
     }
 
     // Rows are a table's columns plus the sync fields; a cap keeps a document from growing

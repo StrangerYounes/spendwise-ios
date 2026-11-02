@@ -28,7 +28,13 @@
       "default_category_gifts": "Gifts",
       "default_category_car": "Car",
       "default_category_misc": "Miscellaneous",
-      "prices_tab": "Prices"
+      "prices_tab": "Prices",
+      "sign_in_apple": "Sign in with Apple",
+      "apple_account": "Apple account",
+      "email_hidden_apple": "Email hidden by Apple",
+      "delete_account_apple": "You'll confirm with Apple first; SpendWise is then disconnected from your Apple ID.",
+      "err_apple_revoke": "Couldn't disconnect SpendWise from your Apple ID, so nothing was deleted. Try again.",
+      "msg_delete_cancelled_apple": "Account not deleted: it needs confirming with Apple."
     },
     "ar": {
       "err_save": "تعذّر الحفظ",
@@ -40,7 +46,13 @@
       "default_category_gifts": "هدايا",
       "default_category_car": "السيارة",
       "default_category_misc": "متفرقات",
-      "prices_tab": "الأسعار"
+      "prices_tab": "الأسعار",
+      "sign_in_apple": "تسجيل الدخول عبر Apple",
+      "apple_account": "حساب Apple",
+      "email_hidden_apple": "البريد مخفي عبر Apple",
+      "delete_account_apple": "ستؤكّد مع Apple أولًا، ثم يُفصل SpendWise عن حساب Apple الخاص بك.",
+      "err_apple_revoke": "تعذّر فصل SpendWise عن حساب Apple الخاص بك، لذلك لم يُحذف شيء. حاول مجددًا.",
+      "msg_delete_cancelled_apple": "لم يُحذف الحساب: يلزم التأكيد مع Apple."
     }
   },
   "infoplist": {

@@ -4,6 +4,12 @@
 <dict>
 	<!-- Firebase Auth keeps the signed-in user in the keychain; without this the simulator says
 	     SecItemAdd (-34018) "A required entitlement isn't present". -->
+	<!-- Sign in with Apple (App Store guideline 4.8: offered next to Google sign-in). The App ID
+	     needs the capability too (docs/HANDOFF.md, console steps). -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
 	<key>keychain-access-groups</key>
 	<array>
 		<string>$(AppIdentifierPrefix)com.unes.spendwise</string>

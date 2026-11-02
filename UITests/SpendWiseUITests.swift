@@ -145,6 +145,23 @@ final class SpendWiseUITests: XCTestCase {
         XCTAssertTrue(app.buttons["listTitle"].waitForExistence(timeout: 5))
     }
 
+    /// Sign in with Apple (guideline 4.8): in Settings → Sync across devices, above Google's and
+    /// at least as wide, in both languages.
+    func testAppleSignInSitsAboveGoogle() {
+        for language in ["en", "ar"] {
+            let app = launch("settings", language: language)
+            let apple = app.descendants(matching: .any)["appleSignIn"].firstMatch
+            let google = app.descendants(matching: .any)["signIn"].firstMatch
+            XCTAssertTrue(app.navigationBars.firstMatch.waitForExistence(timeout: 8))
+            for _ in 0..<6 where !(google.exists && google.isHittable) { app.swipeUp() }
+            XCTAssertTrue(apple.waitForExistence(timeout: 3), "\(language): no Apple button")
+            XCTAssertTrue(google.exists, "\(language): no Google sign-in")
+            XCTAssertLessThan(apple.frame.minY, google.frame.minY, "\(language): Apple's button must come first")
+            XCTAssertGreaterThanOrEqual(apple.frame.width, google.frame.width * 0.8, "\(language): Apple's button as prominent")
+            app.terminate()
+        }
+    }
+
     /// Free: receipts open the Upgrade page instead of the camera.
     func testFreeReceiptOpensUpgrade() {
         let app = launch("home_free")

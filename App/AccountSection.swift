@@ -6,8 +6,9 @@ import SpendWiseCore
 /// then Family (§6.5).
 struct AccountSection: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(Router.self) private var router
-    @State private var signInNotice = false
+    @State private var signInWith: SignInProvider?
     @State private var confirm: Confirm?
 
     var body: some View {
@@ -17,8 +18,9 @@ struct AccountSection: View {
                 HStack(spacing: 16) {
                     Image(systemName: "person.crop.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.primary).frame(width: 26)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(user.name.isEmpty ? user.email : user.name).font(.bodyL).foregroundStyle(Palette.onSurface)
-                        Text(user.email).font(.bodyS).foregroundStyle(Palette.onSurfaceVariant)
+                        Text(accountTitle(user.name, user.email)).font(.bodyL).foregroundStyle(Palette.onSurface)
+                        // Your own relay address is shown (it's what support needs); others never see it
+                        if !user.email.isEmpty { Text(user.email).font(.bodyS).foregroundStyle(Palette.onSurfaceVariant) }
                     }
                 }
                 .padding(.horizontal, 16).padding(.vertical, 12)
@@ -29,13 +31,20 @@ struct AccountSection: View {
                                       label: L("sign_out"), destructive: false) { Task { await cloud.signOut() } }
                 }
                 SettingsRow(icon: "person.crop.circle.badge.minus", title: L("delete_account"), subtitle: L("delete_account_sub"), trailing: .none, tint: Palette.error) {
-                    confirm = Confirm(title: L("delete_account_q"), message: L("delete_account_body"), label: L("delete")) { Task { await cloud.deleteAccount() } }
+                    let body = L("delete_account_body") + (user.apple ? "\n\n" + L("delete_account_apple") : "")
+                    confirm = Confirm(title: L("delete_account_q"), message: body, label: L("delete")) { Task { await cloud.deleteAccount() } }
                 }
             } else {
+                // Apple's button first and at least as prominent as Google's (Apple's guidelines)
+                AppleSignInButton { signInWith = .apple }
+                    .id(colorScheme)
+                    .frame(height: 48)
+                    .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 4)
+                    .accessibilityLabel(L("sign_in_apple"))
                 SettingsRow(icon: "person.crop.circle", title: L("sign_in_google"),
                             subtitle: !cloud.canSignInWithGoogle && !cloud.usingEmulators ? L("sign_in_not_set_up")
                                 : cloud.tier.syncs ? L("sign_in_sub_sync") : L("sign_in_sub_family"),
-                            trailing: cloud.busy ? .progress : .none) { signInNotice = true }
+                            trailing: cloud.busy ? .progress : .none) { signInWith = .google }
                     .accessibilityIdentifier("signIn")
                 #if DEBUG
                 if cloud.usingEmulators {
@@ -50,8 +59,8 @@ struct AccountSection: View {
                 if !cloud.tier.syncs { premiumRow }
             }
         }
-        .sheet(isPresented: $signInNotice) {
-            SignInNotice(syncs: cloud.tier.syncs) { Task { await cloud.signIn() } }
+        .sheet(item: $signInWith) { provider in
+            SignInNotice(syncs: cloud.tier.syncs) { Task { await cloud.signIn(with: provider) } }
         }
         .confirm($confirm)
 
@@ -123,7 +132,8 @@ private struct SyncStatusRow: View {
 }
 
 /// Before signing in: what leaves the phone.
-private struct SignInNotice: View {
+/// "Your data in the cloud", shown before every sign-in (Google or Apple).
+struct SignInNotice: View {
     @Environment(\.dismiss) private var dismiss
     let syncs: Bool
     let proceed: () -> Void
@@ -170,18 +180,20 @@ private struct FamilySection: View {
                     HStack(spacing: 16) {
                         Image(systemName: m.owner ? "star.fill" : "person.fill").foregroundStyle(Palette.primary).frame(width: 26)
                         VStack(alignment: .leading, spacing: 2) {
-                            let name = m.name.isEmpty ? m.email : m.name
+                            let name = accountTitle(m.name, m.email)
                             Text(you ? L("family_you", name) : name).font(.bodyL).foregroundStyle(Palette.onSurface)
-                            Text(m.owner ? L("family_owner_email", m.email) : m.email).font(.bodyS).foregroundStyle(Palette.onSurfaceVariant)
+                            // A relay address Apple made for SpendWise isn't shown to the family
+                            let email = AccountName.visibleEmail(m.email) ?? L("email_hidden_apple")
+                            Text(m.owner ? L("family_owner_email", email) : email).font(.bodyS).foregroundStyle(Palette.onSurfaceVariant)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         if family.isOwner && !you {
                             Button {
-                                confirm = Confirm(title: L("family_remove_q", m.name.isEmpty ? m.email : m.name), message: L("family_remove_body"), label: L("remove")) {
+                                confirm = Confirm(title: L("family_remove_q", accountTitle(m.name, m.email)), message: L("family_remove_body"), label: L("remove")) {
                                     Task { await cloud.removeMember(m) }
                                 }
                             } label: { Image(systemName: "person.badge.minus") }
-                            .accessibilityLabel(L("family_remove_cd", m.name))
+                            .accessibilityLabel(L("family_remove_cd", accountTitle(m.name, m.email)))
                         }
                     }
                     .padding(.horizontal, 16).padding(.vertical, 12)

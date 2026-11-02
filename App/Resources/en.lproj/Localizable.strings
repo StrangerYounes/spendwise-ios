@@ -48,6 +48,7 @@
 "and_separator" = " and ";
 "app_name" = "SpendWise";
 "appearance" = "Appearance";
+"apple_account" = "Apple account";
 "apply" = "Apply";
 "ask" = "Ask";
 "ask_about_spending" = "Ask about your spending";
@@ -141,6 +142,7 @@
 "default_category_misc" = "Miscellaneous";
 "delete" = "Delete";
 "delete_account" = "Delete account";
+"delete_account_apple" = "You'll confirm with Apple first; SpendWise is then disconnected from your Apple ID.";
 "delete_account_body" = "This erases everything kept in your account and the sign-in itself. Other phones signed in to it stop syncing. The lists on this phone stay, and can still be backed up to a file.";
 "delete_account_q" = "Delete your account?";
 "delete_account_sub" = "Erase the cloud copy and the sign-in";
@@ -163,7 +165,9 @@
 "edit_library_item" = "Edit library item";
 "edit_list" = "Edit list";
 "edit_named" = "Edit %1$@";
+"email_hidden_apple" = "Email hidden by Apple";
 "err_ai_down" = "The AI isn't working right now";
+"err_apple_revoke" = "Couldn't disconnect SpendWise from your Apple ID, so nothing was deleted. Try again.";
 "err_close" = "Couldn't close the family";
 "err_code" = "Couldn't make a code";
 "err_contact" = "Try again. If it keeps happening, tell us at %1$@.";
@@ -290,7 +294,7 @@
 "list_name_hint" = "e.g. Weekly groceries";
 "listening" = "Listening…";
 "local_rate" = "Local currency rate";
-"local_rate_body" = "Optional. If prices in another currency, like Lebanese pounds, are part of your shopping, enter how much of it makes 1 %1$@. Receipts and spoken prices in it are converted for you.";
+"local_rate_body" = "Optional. If some of your prices are in a second, local currency, enter how much of it makes 1 %1$@. Receipts and spoken prices in it are converted for you.";
 "local_rate_dialog" = "How much of your local currency makes 1 %1$@? Quick add and receipts use it to convert prices, and to tell which currency you mean.";
 "local_rate_label" = "Local currency per %1$@";
 "local_rate_set" = "1 %1$@ = %2$@ local currency";
@@ -308,6 +312,7 @@
 "move_up" = "Move up";
 "msg_backup_saved" = "Backup saved";
 "msg_closed" = "The family is closed. Your lists stay on this phone and in your account.";
+"msg_delete_cancelled_apple" = "Account not deleted: it needs confirming with Apple.";
 "msg_deleted" = "Your account and its cloud copy are deleted. Your lists stay on this phone.";
 "msg_family_started" = "Family started. Invite someone to share your lists.";
 "msg_join_already" = "You're already in this family.";
@@ -474,6 +479,7 @@
 "settings" = "Settings";
 "show_all" = "Show all %1$ld";
 "show_lists" = "Show lists";
+"sign_in_apple" = "Sign in with Apple";
 "sign_in_google" = "Sign in with Google";
 "sign_in_not_set_up" = "Google sign-in isn't set up for this build yet.";
 "sign_in_sub_family" = "To join a family someone invited you to. Your lists stay on this phone.";

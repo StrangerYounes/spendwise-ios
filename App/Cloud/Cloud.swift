@@ -4,6 +4,7 @@ import FirebaseCore
 import FirebaseFirestore
 import FirebaseFunctions
 import GoogleSignIn
+import AuthenticationServices
 import Network
 import Observation
 import UIKit
@@ -18,8 +19,11 @@ enum Tier: Hashable {
     var hasAiExtras: Bool { self == .premium }
 }
 
-/// Who is signed in with Google (the anonymous account the AI uses isn't one).
-struct SignedIn: Equatable { let uid: String; let name: String; let email: String }
+enum SignInProvider: String, Identifiable { case apple, google; var id: String { rawValue } }
+
+/// Who is signed in, with Google or Apple (the anonymous account the AI uses isn't one). Apple
+/// accounts may have no name and a private relay email.
+struct SignedIn: Equatable { let uid: String; let name: String; let email: String; var apple = false }
 
 struct FamilyMember: Equatable { let uid: String; let name: String; let email: String; let owner: Bool }
 
@@ -166,6 +170,16 @@ final class Cloud {
 
     var canSignInWithGoogle: Bool { Bundle.main.object(forInfoDictionaryKey: "GIDClientID") != nil }
 
+    /// After "Your data in the cloud": Apple's sheet waits for the notice to finish closing.
+    func signIn(with provider: SignInProvider) async {
+        switch provider {
+        case .google: await signIn()
+        case .apple:
+            try? await Task.sleep(for: .milliseconds(450))
+            await signInWithApple()
+        }
+    }
+
     /// Shows Google's account picker and signs in with the chosen account.
     func signIn() async {
         guard Self.configured else { return }
@@ -188,6 +202,69 @@ final class Cloud {
                 print("SpendWise: sign-in failed: \(error)")
                 model?.show(UserErrors.message(error, L("err_sign_in")))
             }
+        }
+    }
+
+    /// Signs in with Apple (App Store guideline 4.8: offered wherever Google is). Apple gives the
+    /// name only on the very first sign-in: it becomes the account's name, which the family rules
+    /// compare with the sign-in's token.
+    func signInWithApple() async {
+        guard Self.configured else { return }
+        busy = true
+        defer { busy = false }
+        let nonce = AppleNonce.make()
+        do {
+            let apple = try await AppleAuthorizer.request(nonce: nonce, scopes: [.fullName, .email])
+            guard let token = apple.identityToken.flatMap({ String(data: $0, encoding: .utf8) }) else {
+                throw ASAuthorizationError(.invalidResponse)
+            }
+            let credential = OAuthProvider.appleCredential(withIDToken: token, rawNonce: nonce, fullName: apple.fullName)
+            await ai.signInStarting()
+            defer { ai.signInEnded() }
+            let u = try await Auth.auth().signIn(with: credential).user
+            if (u.displayName ?? "").isEmpty,
+               let name = AccountName.fullName(given: apple.fullName?.givenName, family: apple.fullName?.familyName) {
+                let change = u.createProfileChangeRequest()
+                change.displayName = name
+                try? await change.commitChanges()
+                try? await u.reload()
+                _ = try? await u.getIDTokenResult(forcingRefresh: true)
+            }
+            user = Auth.auth().currentUser.flatMap(Self.signedIn)
+            watchPlan()
+            sync.update()
+        } catch {
+            if AppleAuthorizer.isCancel(error) {
+                model?.show(L("msg_sign_in_cancelled"))
+            } else {
+                lastError = "\(error)"
+                print("SpendWise: Apple sign-in failed: \(error)")
+                model?.show(UserErrors.message(error, L("err_sign_in")))
+            }
+        }
+    }
+
+    /// Apple's rule for apps with its sign-in: deleting the account revokes Apple's token. That needs
+    /// a fresh authorization code, so the person confirms with Apple again; the fresh sign-in also
+    /// lets Firebase delete the account. False (and a message) when it didn't happen.
+    private func revokeApple(_ current: User) async -> Bool {
+        let nonce = AppleNonce.make()
+        do {
+            let apple = try await AppleAuthorizer.request(nonce: nonce, scopes: [])
+            guard let code = apple.authorizationCode.flatMap({ String(data: $0, encoding: .utf8) }) else {
+                model?.show(L("err_apple_revoke"))
+                return false
+            }
+            if let token = apple.identityToken.flatMap({ String(data: $0, encoding: .utf8) }) {
+                _ = try? await current.reauthenticate(with: OAuthProvider.appleCredential(withIDToken: token, rawNonce: nonce, fullName: nil))
+            }
+            try await Auth.auth().revokeToken(withAuthorizationCode: code)
+            return true
+        } catch {
+            lastError = "\(error)"
+            print("SpendWise: Apple revoke failed: \(error)")
+            model?.show(AppleAuthorizer.isCancel(error) ? L("msg_delete_cancelled_apple") : L("err_apple_revoke"))
+            return false
         }
     }
 
@@ -242,6 +319,8 @@ final class Cloud {
         guard let user, let current = Auth.auth().currentUser else { return }
         busy = true
         defer { busy = false }
+        // Apple first: if its token can't be revoked, nothing is deleted
+        if user.apple, !(await revokeApple(current)) { return }
         do {
             let own = Self.firestore.collection(CloudSync.users).document(user.uid)
             for t in SyncSchema.tables {
@@ -296,7 +375,8 @@ final class Cloud {
         await work(L("err_code"), success: nil) {
             let code = FamilyCodes.newCode()
             try await Self.firestore.collection(CloudSync.invites).document(code).setData([
-                "space": family.id, "by": user.uid, "byName": user.name.isEmpty ? user.email : user.name,
+                // Never a relay address: the name, else a visible email, else nothing
+                "space": family.id, "by": user.uid, "byName": AccountName.inviter(name: user.name, email: user.email),
                 "createdAt": FieldValue.serverTimestamp(), "expiresAt": Timestamp(date: Date().addingTimeInterval(7 * 86_400)),
                 "usedBy": NSNull(),
             ])
@@ -355,7 +435,7 @@ final class Cloud {
     /// The owner takes someone off the family; their phones notice and stop syncing with it.
     func removeMember(_ m: FamilyMember) async {
         guard let family else { return }
-        await work(L("err_remove"), success: L("msg_removed", m.name.isEmpty ? m.email : m.name)) {
+        await work(L("err_remove"), success: L("msg_removed", accountTitle(m.name, m.email))) {
             try await Self.firestore.collection(CloudSync.spaces).document(family.id).updateData(["members.\(m.uid)": FieldValue.delete()])
         }
     }
@@ -518,7 +598,8 @@ final class Cloud {
     }
 
     private nonisolated static func signedIn(_ u: User) -> SignedIn? {
-        u.isAnonymous ? nil : SignedIn(uid: u.uid, name: u.displayName ?? "", email: u.email ?? "")
+        u.isAnonymous ? nil : SignedIn(uid: u.uid, name: u.displayName ?? "", email: u.email ?? "",
+                                       apple: u.providerData.contains { $0.providerID == "apple.com" })
     }
 }
 

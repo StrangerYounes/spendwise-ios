@@ -9,6 +9,41 @@ in `screenshots/` (gitignored). The Android agent got the same tasks (prompt in 
 its strings feed scripts/convert_strings.py; iOS overrides qa_example/ai_instructions_quick_hint
 until Android changes them. For a new CI round: public, push, watch, private again.
 
+## 2 Nov task (account switching, welcome, Sign in with Apple)
+- **Sections 1–2 (account switching, welcome) wait for Android to land them.** On 2 Nov they were still
+  uncommitted in MyShoppingList (DataOwner.kt, OtherAccountDialog.kt, AccountSection.kt…). Port from its
+  git log and FEATURES.md §4.10 / §6.1 / §6.3 once committed; copy strings exactly. Generate strings
+  from Android's **committed** HEAD, not its working copy:
+  `git -C ~/Documents/Dev/MyShoppingList archive HEAD app/src/main/res | tar -x -C <tmp>` then
+  `python3 scripts/convert_strings.py <tmp>/app/src/main/res App/Resources scripts/ios-strings.json`.
+- **Section 3, Sign in with Apple: done in the app** (2 Nov). `App/Cloud/AppleSignIn.swift`
+  (AppleAuthorizer, Apple's standard button: the UIKit `ASAuthorizationAppleIDButton`, because the tap
+  first shows "Your data in the cloud"; SwiftUI's `SignInWithAppleButton` starts Apple's sheet at once),
+  `Cloud.signInWithApple()` (nonce, `OAuthProvider.appleCredential`, the first-time name becomes the
+  display name), Delete account revokes Apple's token first (`revokeApple`: re-authenticate with Apple,
+  `revokeToken(withAuthorizationCode:)`; on failure nothing is deleted). Core `AppleNonce`, `SHA256`,
+  `AccountName` (no name / relay email fallbacks) with tests. Settings: Apple's button above Google's.
+  The welcome's sign-in page comes with section 2. Rules, `test_rules.py` (66/66) and
+  `grant_premium.py` changed in MyShoppingList (200e22b), **rules not deployed**.
+- **Real Apple sign-in can only be tried on a real iPhone or TestFlight**, after the console steps
+  below (not in the simulator CI uses, not on Appetize).
+
+### Console checklist (the owner does these)
+- [ ] **Apple Developer → Certificates, IDs & Profiles → Identifiers → `com.unes.spendwise`:** tick
+      **Sign in with Apple** ("Enable as a primary App ID"), Save. Profiles made after this include it.
+- [ ] **Apple Developer → Keys → +:** name "SpendWise Sign in with Apple", tick **Sign in with Apple** →
+      Configure → primary App ID `com.unes.spendwise` → Register. Download `AuthKey_<KEYID>.p8` (only
+      once; keep it private, not in any repo). Note the **Key ID** (10 characters, on the key's page)
+      and your **Team ID** (10 characters, top right / Membership details).
+- [ ] **Firebase console → spendwise-unes → Authentication → Sign-in method → Add new provider →
+      Apple → Enable.** Services ID: leave empty for now (the Android web flow needs one later,
+      FEATURES.md §10.2). Under **OAuth code flow configuration**: Apple team ID = your Team ID,
+      Key ID = the key's ID, Private key = the whole contents of the .p8 file. Save. (These are what
+      token revocation on Delete account uses.)
+- [ ] **Firestore rules:** review MyShoppingList 200e22b, then (when you say so)
+      `cd ~/Documents/Dev/MyShoppingList/firebase && firebase deploy --only firestore:rules`.
+- Xcode capability: done in the repo (`App/SpendWise.entitlements`: `com.apple.developer.applesignin`).
+
 ## Commits
 Everything is committed and pushed.
 Commit author: `git -c user.email=younes.masri.97@gmail.com commit`, trailer

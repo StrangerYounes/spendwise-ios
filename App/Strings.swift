@@ -170,6 +170,15 @@ func categoryLabel(_ name: String?) -> String {
     return AppDatabase.defaultCategoryKey(name).map { L($0) } ?? name
 }
 
+/// An account's name as shown: its name, else its email, else "Apple account" when Apple hides it.
+func accountTitle(_ name: String, _ email: String) -> String {
+    switch AccountName.title(name: name, email: email) {
+    case .name(let n): return n
+    case .email(let e): return e
+    case .hidden: return L("apple_account")
+    }
+}
+
 /// Wraps text that may mix directions (a name or amount in an Arabic sentence) so it keeps its own.
 func isolate(_ s: String) -> String { "\u{2068}" + s + "\u{2069}" }
 
