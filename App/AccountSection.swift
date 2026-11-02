@@ -161,8 +161,8 @@ struct SignInNotice: View {
             .navigationTitle(L("cloud_title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button(L("cancel")) { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button(L("continue_")) { dismiss(); proceed() } }
+                ToolbarItem(placement: .cancellationAction) { Button(L("cancel")) { dismiss() }.accessibilityIdentifier("signInCancel") }
+                ToolbarItem(placement: .confirmationAction) { Button(L("continue_")) { dismiss(); proceed() }.accessibilityIdentifier("signInContinue") }
             }
         }
         .presentationDetents([.medium, .large])

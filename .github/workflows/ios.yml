@@ -90,7 +90,7 @@ jobs:
           DEMO: SpendWise
           WAIT: "5"
           SCREENS: >-
-            welcome welcome_add welcome_setup home home_completed home_search home_guide home_free new_list
+            welcome welcome_intro welcome_add welcome_setup welcome_signin welcome_signed_in home home_completed home_search home_guide home_free new_list
             list list_add list_edit_item list_store list_reorder list_completed list_undo list_guide list_photo
             library library_prices library_item item item_milk
             insights insights_category insights_filter categories category_editor stores
@@ -98,7 +98,7 @@ jobs:
             other_account other_account_fresh sign_out
             quickadd quickadd_free quickadd_review quickadd_receipt quickadd_receipt_review quickadd_convert quickadd_recording quickadd_error quickadd_busy
             analysis analysis_ready analysis_free report
-          DARK: home list insights item quickadd_review quickadd_receipt settings_family report welcome upgrade settings other_account
+          DARK: home list insights item quickadd_review quickadd_receipt settings_family report welcome upgrade settings other_account welcome_signin
         run: scripts/screenshots.sh "$APP" "$UDID" screenshots
 
       - name: Package the simulator build

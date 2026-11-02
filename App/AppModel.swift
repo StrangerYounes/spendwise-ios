@@ -34,6 +34,9 @@ struct Snack: Identifiable, Equatable {
 @MainActor @Observable
 final class AppModel {
     let database: AppDatabase
+    /// The welcome's language page was answered (this run only): the screen is rebuilt in the
+    /// chosen language and goes on to the next page.
+    var welcomeLanguageChosen = false
     let repo: ShoppingRepository
     let backup: BackupRepository
     let cloud: Cloud

@@ -90,12 +90,14 @@ final class SpendWiseUITests: XCTestCase {
         XCTAssertTrue(card.label.contains("€"), card.label)
     }
 
-    /// The welcome's language switch turns the app to Arabic at once.
+    /// The language page comes first: choosing العربية turns the app to Arabic at once and moves on.
     func testWelcomeLanguageSwitch() {
         let app = launch("welcome")
-        XCTAssertTrue(app.staticTexts["Welcome to SpendWise"].waitForExistence(timeout: 8))
-        tapWhenReady(app.buttons["welcomeLanguage"])
-        // The switch now offers English back; then the English title must be gone
+        let english = app.buttons["welcomeEnglish"]
+        XCTAssertTrue(english.waitForExistence(timeout: 8))
+        XCTAssertTrue(english.isSelected, "the phone's language is picked out")
+        tapWhenReady(app.buttons["welcomeArabic"])
+        // The pager, in Arabic: its small switch now offers English back
         let back = app.buttons.matching(NSPredicate(format: "identifier == 'welcomeLanguage' AND label CONTAINS 'English'")).firstMatch
         XCTAssertTrue(back.waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["Welcome to SpendWise"].exists)
@@ -114,13 +116,55 @@ final class SpendWiseUITests: XCTestCase {
         XCTAssertNil(card.label.range(of: "[٠-٩]", options: .regularExpression), card.label)
     }
 
-    /// The welcome ends in the guide: Home asks for the first list.
+    /// The welcome ends in the guide: language, three pages, currency, then Not now on the
+    /// sign-in page, and Home asks for the first list.
     func testWelcomeLeadsToGuide() {
         let app = launch("welcome")
+        tapWhenReady(app.buttons["welcomeEnglish"])
         for _ in 0..<3 { tapWhenReady(app.buttons["welcomeNext"]) }
         XCTAssertTrue(app.staticTexts["Your currency"].waitForExistence(timeout: 5))
         tapWhenReady(app.buttons["welcomeNext"])
+        tapWhenReady(app.buttons["welcomeNotNow"])
         XCTAssertTrue(app.staticTexts["Make your first list"].waitForExistence(timeout: 5))
+    }
+
+    /// A fresh install in both languages: the language page, then the sign-in page with Apple's
+    /// button above Google's; each goes through "Your data in the cloud"; Not now goes on.
+    func testWelcomeSignInPageInBothLanguages() {
+        for language in ["en", "ar"] {
+            let app = launch("welcome", language: language)
+            let mine = app.buttons[language == "ar" ? "welcomeArabic" : "welcomeEnglish"]
+            XCTAssertTrue(mine.waitForExistence(timeout: 8), "\(language): no language page")
+            XCTAssertTrue(mine.isSelected, "\(language): the phone's language isn't picked out")
+            mine.tap()
+            for _ in 0..<4 { tapWhenReady(app.buttons["welcomeNext"]) }
+            let apple = app.descendants(matching: .any)["appleSignIn"].firstMatch
+            let google = app.buttons["welcomeGoogle"]
+            XCTAssertTrue(apple.waitForExistence(timeout: 5), "\(language): no Apple button")
+            XCTAssertTrue(google.exists, "\(language): no Google button")
+            XCTAssertLessThan(apple.frame.minY, google.frame.minY, "\(language): Apple's button must come first")
+            XCTAssertGreaterThanOrEqual(apple.frame.width, google.frame.width * 0.8, "\(language): Apple's button as prominent")
+            for button in [google, apple] {
+                button.tap()
+                tapWhenReady(app.buttons["signInCancel"])
+                XCTAssertTrue(waitGone(app.buttons["signInCancel"]), "\(language): the notice stays")
+            }
+            tapWhenReady(app.buttons["welcomeNotNow"])
+            XCTAssertTrue(app.buttons["newList"].waitForExistence(timeout: 5), "\(language): Not now didn't go on")
+            app.terminate()
+        }
+    }
+
+    /// Signed in from the welcome: "Signed in as …" and Make my first list.
+    func testWelcomeSignedIn() {
+        for language in ["en", "ar"] {
+            let app = launch("welcome_signed_in", language: language)
+            XCTAssertTrue(app.descendants(matching: .any)["welcomeSignedIn"].firstMatch.waitForExistence(timeout: 8), "\(language)")
+            XCTAssertFalse(app.buttons["welcomeNotNow"].exists)
+            tapWhenReady(app.buttons["welcomeNext"])
+            XCTAssertTrue(app.buttons["newList"].waitForExistence(timeout: 5), "\(language)")
+            app.terminate()
+        }
     }
 
     /// Insights: a category opens to the lists behind it, and a list opens.

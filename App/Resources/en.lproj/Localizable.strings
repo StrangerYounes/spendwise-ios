@@ -539,6 +539,8 @@
 "sync_up_to_date" = "Up to date";
 "take_photo" = "Take photo";
 "tap_to_fix" = "Tap anything to fix it.";
+"tester_body" = "Over the next two weeks, please use it whenever you shop: make a list, add items by typing or voice, scan a receipt, and tick items while shopping.\n\nTell Younes what's confusing or broken (WhatsApp or hello@younes.app).\n\nSign in with Google on the next pages so Younes can unlock Premium for you.";
+"tester_title" = "You're testing SpendWise. Thank you!";
 "theme" = "Theme";
 "theme_dark" = "Dark";
 "theme_light" = "Light";
@@ -573,6 +575,10 @@
 "welcome_prices_body" = "SpendWise remembers what you paid and where, so you can spot the cheaper store and follow your spending month by month.";
 "welcome_prices_title" = "Know your prices";
 "welcome_returning" = "I've used SpendWise before";
+"welcome_signed_in" = "Signed in as %1$@";
+"welcome_signin_body" = "Sign in to sync your lists across your phones, share them with your family, and get them back on a new phone.";
+"welcome_signin_note" = "Syncing needs Premium or a family. You can also sign in later in Settings.";
+"welcome_signin_title" = "Keep your lists with you";
 "welcome_start" = "Make my first list";
 "welcome_title" = "Welcome to SpendWise";
 "what_did_you_spend" = "What did you spend on?";

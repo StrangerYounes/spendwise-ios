@@ -51,6 +51,12 @@ enum DemoMode {
         model.cloud.ai.setAllowance(.receipt, Allowance(used: 3, limit: 20, weekly: false, asOf: now))
         model.cloud.ai.setAllowance(.analysisRequest, Allowance(used: 2, limit: 20, weekly: false, asOf: now))
         model.cloud.ai.setAllowance(.analysisReport, Allowance(used: 1, limit: 3, weekly: true, asOf: now))
+        // The welcome's language page shows only on "welcome"; its other pages come after it
+        model.welcomeLanguageChosen = s.hasPrefix("welcome") && s != "welcome"
+        if s == "welcome_signed_in" {
+            model.cloud.demo(user: SignedIn(uid: "me", name: Lang.isArabic ? "ريما خوري" : "Rima Khoury", email: "rima@example.com"),
+                             family: nil, status: SyncStatus())
+        }
         // Whose data is on the phone starts unknown in each demo
         model.cloud.setDataOwner(nil)
         if s == "settings_apple" {
