@@ -10,12 +10,13 @@ its strings feed scripts/convert_strings.py; iOS overrides qa_example/ai_instruc
 until Android changes them. For a new CI round: public, push, watch, private again.
 
 ## 2 Nov task (account switching, welcome, Sign in with Apple)
-- **Sections 1–2 (account switching, welcome) wait for Android to land them.** On 2 Nov they were still
-  uncommitted in MyShoppingList (DataOwner.kt, OtherAccountDialog.kt, AccountSection.kt…). Port from its
-  git log and FEATURES.md §4.10 / §6.1 / §6.3 once committed; copy strings exactly. Generate strings
-  from Android's **committed** HEAD, not its working copy:
+- **Sections 1–2 ported** (2 Nov), from Android ffb69da (account switching: `Cloud.otherAccount` /
+  `answer` / `signOut(removeLists:)`, prefs `sync.data_owner`, Core `DataOwner`, `SyncStore.hasData/wipe`,
+  `App/OtherAccount.swift`) and a1c3c9d (welcome: language page first, sign-in page with Apple above
+  Google, no tester page). Strings come from Android's **committed** HEAD, never its working copy:
   `git -C ~/Documents/Dev/MyShoppingList archive HEAD app/src/main/res | tar -x -C <tmp>` then
   `python3 scripts/convert_strings.py <tmp>/app/src/main/res App/Resources scripts/ios-strings.json`.
+  The Android session (dev-53) waits to hear the iOS CI is green to update its FEATURES §10.2 bullet.
 - **Section 3, Sign in with Apple: done in the app** (2 Nov). `App/Cloud/AppleSignIn.swift`
   (AppleAuthorizer, Apple's standard button: the UIKit `ASAuthorizationAppleIDButton`, because the tap
   first shows "Your data in the cloud"; SwiftUI's `SignInWithAppleButton` starts Apple's sheet at once),
