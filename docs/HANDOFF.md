@@ -25,7 +25,8 @@ until Android changes them. For a new CI round: public, push, watch, private aga
   `revokeToken(withAuthorizationCode:)`; on failure nothing is deleted). Core `AppleNonce`, `SHA256`,
   `AccountName` (no name / relay email fallbacks) with tests. Settings: Apple's button above Google's.
   The welcome's sign-in page comes with section 2. Rules, `test_rules.py` (66/66) and
-  `grant_premium.py` changed in MyShoppingList (200e22b), **rules not deployed**.
+  `grant_premium.py` changed in MyShoppingList (200e22b); the rules were **deployed 2 Nov** (owner
+  approved, via the Android session, 66/66 tests first; MyShoppingList fe66804).
 - **Real Apple sign-in can only be tried on a real iPhone or TestFlight**, after the console steps
   below (not in the simulator CI uses, not on Appetize).
 
@@ -41,8 +42,7 @@ until Android changes them. For a new CI round: public, push, watch, private aga
       FEATURES.md §10.2). Under **OAuth code flow configuration**: Apple team ID = your Team ID,
       Key ID = the key's ID, Private key = the whole contents of the .p8 file. Save. (These are what
       token revocation on Delete account uses.)
-- [ ] **Firestore rules:** review MyShoppingList 200e22b, then (when you say so)
-      `cd ~/Documents/Dev/MyShoppingList/firebase && firebase deploy --only firestore:rules`.
+- [x] **Firestore rules:** deployed 2 Nov (MyShoppingList 200e22b, approved by the owner).
 - Xcode capability: done in the repo (`App/SpendWise.entitlements`: `com.apple.developer.applesignin`).
 
 ## Commits
