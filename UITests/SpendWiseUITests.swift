@@ -209,7 +209,7 @@ final class SpendWiseUITests: XCTestCase {
     // MARK: Another account's lists (FEATURES.md §6.3) and signing out (§6.1), English and Arabic
 
     private func listsShown(_ app: XCUIApplication, _ timeout: TimeInterval = 5) -> Bool {
-        app.descendants(matching: .any)["listCard"].firstMatch.waitForExistence(timeout: timeout)
+        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'list_'")).firstMatch.waitForExistence(timeout: timeout)
     }
 
     private func waitGone(_ element: XCUIElement, _ timeout: TimeInterval = 5) -> Bool {

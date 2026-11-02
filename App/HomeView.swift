@@ -129,7 +129,6 @@ struct HomeView: View {
                  open: { router.open(.list(list.id)) },
                  edit: { editing = list.shoppingList },
                  delete: { askDelete(list.shoppingList) })
-            .accessibilityIdentifier("listCard")
     }
 
     private func askDelete(_ list: ShoppingList) {
