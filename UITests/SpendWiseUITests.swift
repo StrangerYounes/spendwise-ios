@@ -162,6 +162,78 @@ final class SpendWiseUITests: XCTestCase {
         }
     }
 
+    // MARK: Another account's lists (FEATURES.md §6.3) and signing out (§6.1), English and Arabic
+
+    private func listsShown(_ app: XCUIApplication, _ timeout: TimeInterval = 5) -> Bool {
+        app.descendants(matching: .any)["listCard"].firstMatch.waitForExistence(timeout: timeout)
+    }
+
+    private func waitGone(_ element: XCUIElement, _ timeout: TimeInterval = 5) -> Bool {
+        let gone = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: element)
+        return XCTWaiter.wait(for: [gone], timeout: timeout) == .completed
+    }
+
+    /// Add them: the phone's lists stay and go to the new account.
+    func testOtherAccountAddThem() {
+        for language in ["en", "ar"] {
+            let app = launch("other_account", language: language)
+            let add = app.buttons["otherAccountAdd"]
+            tapWhenReady(add)
+            XCTAssertTrue(waitGone(add), "\(language): the question stays")
+            XCTAssertTrue(listsShown(app), "\(language): the lists went")
+            app.terminate()
+        }
+    }
+
+    /// Start with this account's lists: a confirmation, then the phone's lists are removed.
+    func testOtherAccountStartFresh() {
+        for language in ["en", "ar"] {
+            let app = launch("other_account", language: language)
+            tapWhenReady(app.buttons["otherAccountFresh"])
+            XCTAssertTrue(app.buttons["otherAccountBackup"].waitForExistence(timeout: 5), "\(language): no Back up first")
+            // Back returns to the choices; then remove for real
+            tapWhenReady(app.buttons["otherAccountBack"])
+            tapWhenReady(app.buttons["otherAccountFresh"])
+            let remove = app.buttons["otherAccountRemove"]
+            tapWhenReady(remove)
+            XCTAssertTrue(waitGone(remove), "\(language): the question stays")
+            XCTAssertFalse(listsShown(app, 2), "\(language): the phone's lists are still there")
+            app.terminate()
+        }
+    }
+
+    /// Cancel: signs out again; nothing changes on the phone.
+    func testOtherAccountCancel() {
+        for language in ["en", "ar"] {
+            let app = launch("other_account", language: language)
+            let cancel = app.buttons["otherAccountCancel"]
+            tapWhenReady(cancel)
+            XCTAssertTrue(waitGone(cancel), "\(language): the question stays")
+            XCTAssertTrue(listsShown(app), "\(language): the lists went")
+            app.terminate()
+        }
+    }
+
+    /// Sign out: Keep lists on this phone is the default; Remove them from this phone empties it.
+    func testSignOutKeepOrRemove() {
+        for language in ["en", "ar"] {
+            for remove in [false, true] {
+                let app = launch("sign_out", language: language)
+                XCTAssertTrue(app.buttons["signOutKeep"].waitForExistence(timeout: 8), "\(language): no choice")
+                XCTAssertTrue(app.buttons["signOutKeep"].isSelected, "\(language): Keep isn't the default")
+                if remove { app.buttons["signOutRemove"].tap() }
+                tapWhenReady(app.buttons["signOutConfirm"])
+                // Signed out: Settings offers signing in again
+                let signIn = app.descendants(matching: .any)["signIn"].firstMatch
+                for _ in 0..<4 where !signIn.exists { app.swipeUp() }
+                XCTAssertTrue(signIn.waitForExistence(timeout: 5), "\(language): still signed in")
+                app.navigationBars.buttons.element(boundBy: 0).tap()
+                XCTAssertEqual(listsShown(app, remove ? 2 : 5), !remove, "\(language) remove=\(remove)")
+                app.terminate()
+            }
+        }
+    }
+
     /// Free: receipts open the Upgrade page instead of the camera.
     func testFreeReceiptOpensUpgrade() {
         let app = launch("home_free")

@@ -92,6 +92,7 @@ final class CloudSync {
 
     /// Re-evaluates the target when the account, the plan or the family may have changed.
     func update() {
+        cloud.askAboutOwnerIfNeeded()
         guard let user = cloud.user else {
             spaceListener?.remove(); spaceListener = nil; spaceFor = nil; knownSpace = nil
             setTarget(nil)
@@ -167,10 +168,17 @@ final class CloudSync {
         Task { @MainActor in
             do {
                 if self.prefs.string(forKey: Keys.joined) != t.key {
+                    // Another account's lists: nothing goes up until the person says what to do
+                    // with them (Cloud.answer resumes)
+                    if self.cloud.needsAsking(t.user) {
+                        self.cloud.otherAccount = t.user
+                        return
+                    }
                     self.cloud.syncStatus = SyncStatus(state: .joining)
                     try await self.join(t)
                     guard gen == self.generation else { return }
                     self.prefs.set(t.key, forKey: Keys.joined)
+                    self.cloud.setDataOwner(DataOwner.ownerAfterJoining(uid: t.user.uid, space: t.space))
                 } else {
                     // Changes made while sync was off (Premium switched off and on) weren't recorded: find them
                     if try self.store.mode() != SyncSchema.modeRecording { try self.store.transaction { try self.store.catchUp(now: nowMillis()) } }
@@ -186,6 +194,13 @@ final class CloudSync {
                 self.failed(error, gen)
             }
         }
+    }
+
+    /// After the question about another account's lists is answered: start the waiting first sync.
+    func resume() {
+        guard let t = target, !running else { return }
+        stopRun()
+        start(t)
     }
 
     private func failed(_ error: Error, _ gen: Int) {

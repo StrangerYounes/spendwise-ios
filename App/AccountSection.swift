@@ -9,6 +9,7 @@ struct AccountSection: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(Router.self) private var router
     @State private var signInWith: SignInProvider?
+    @State private var signingOut = false
     @State private var confirm: Confirm?
 
     var body: some View {
@@ -26,10 +27,9 @@ struct AccountSection: View {
                 .padding(.horizontal, 16).padding(.vertical, 12)
                 if cloud.tier.syncs || cloud.family != nil { SyncStatusRow(status: cloud.syncStatus) } else { premiumRow }
                 SettingsRow(icon: "rectangle.portrait.and.arrow.right", title: L("sign_out"), subtitle: L("sign_out_sub"), trailing: .none) {
-                    let waiting = cloud.syncStatus.waiting
-                    confirm = Confirm(title: L("sign_out_q"), message: L("sign_out_body") + (waiting > 0 ? "\n\n" + P("sign_out_waiting", waiting) : ""),
-                                      label: L("sign_out"), destructive: false) { Task { await cloud.signOut() } }
+                    signingOut = true
                 }
+                .accessibilityIdentifier("signOut")
                 SettingsRow(icon: "person.crop.circle.badge.minus", title: L("delete_account"), subtitle: L("delete_account_sub"), trailing: .none, tint: Palette.error) {
                     let body = L("delete_account_body") + (user.apple ? "\n\n" + L("delete_account_apple") : "")
                     confirm = Confirm(title: L("delete_account_q"), message: body, label: L("delete")) { Task { await cloud.deleteAccount() } }
@@ -58,6 +58,12 @@ struct AccountSection: View {
                 #endif
                 if !cloud.tier.syncs { premiumRow }
             }
+        }
+        .sheet(isPresented: $signingOut) { SignOutSheet() }
+        .onAppear {
+            #if DEBUG
+            DemoMode.openAccountExtras(signingOut: $signingOut)
+            #endif
         }
         .sheet(item: $signInWith) { provider in
             SignInNotice(syncs: cloud.tier.syncs) { Task { await cloud.signIn(with: provider) } }

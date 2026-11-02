@@ -51,7 +51,25 @@ enum DemoMode {
         model.cloud.ai.setAllowance(.receipt, Allowance(used: 3, limit: 20, weekly: false, asOf: now))
         model.cloud.ai.setAllowance(.analysisRequest, Allowance(used: 2, limit: 20, weekly: false, asOf: now))
         model.cloud.ai.setAllowance(.analysisReport, Allowance(used: 1, limit: 3, weekly: true, asOf: now))
-        if s.hasPrefix("settings_signed") || s == "settings_family" {
+        // Whose data is on the phone starts unknown in each demo
+        model.cloud.setDataOwner(nil)
+        if s == "settings_apple" {
+            // Sign in with Apple: no name and a private relay email, a family member likewise
+            let me = SignedIn(uid: "me", name: "", email: "x7k2p9@privaterelay.appleid.com", apple: true)
+            let family = Family(id: "fam", ownerUid: "me", members: [
+                FamilyMember(uid: "me", name: "", email: me.email, owner: true),
+                FamilyMember(uid: "sami", name: Lang.isArabic ? "سامي خوري" : "Sami Khoury", email: "q1w2e3@privaterelay.appleid.com", owner: false),
+            ], isOwner: true)
+            model.cloud.demo(user: me, family: family, status: SyncStatus(state: .synced, waiting: 0, lastSyncedAt: nowMillis() - 20_000))
+        }
+        if s.hasPrefix("other_account") {
+            // Signed in as another account while the phone holds someone else's lists
+            let tester = SignedIn(uid: "tester", name: "Tester", email: "tester@example.com")
+            model.cloud.setDataOwner("me")
+            model.cloud.demo(user: tester, family: nil, status: SyncStatus())
+            model.cloud.otherAccount = tester
+        }
+        if s.hasPrefix("settings_signed") || s == "settings_family" || s == "sign_out" {
             let me = SignedIn(uid: "me", name: Lang.isArabic ? "ريما خوري" : "Rima Khoury", email: "rima@example.com")
             let family = s == "settings_family" ? Family(id: "fam", ownerUid: "me", members: [
                 FamilyMember(uid: "me", name: me.name, email: me.email, owner: true),
@@ -75,7 +93,8 @@ enum DemoMode {
         case "item": router.path = [.item(n.gas)]
         case "item_milk": router.path = [.item(n.milk)]
         case "insights", "insights_category", "insights_filter", "insights_free": router.path = [.insights]
-        case "settings", "settings_signed_in", "settings_family", "settings_currency", "settings_rate", "settings_ai": router.path = [.settings]
+        case "settings", "settings_signed_in", "settings_family", "settings_currency", "settings_rate", "settings_ai", "settings_apple", "sign_out":
+            router.path = [.settings]
         case "ai_instructions": router.path = [.settings, .aiInstructions]
         case "upgrade": router.path = [.upgrade]
         case "analysis", "analysis_ready", "analysis_free": router.path = [.insights, .analysis]
@@ -143,6 +162,11 @@ enum DemoMode {
         guard isOn else { return }
         if screen == "settings_currency" { after { currency.wrappedValue = true } }
         if screen == "settings_rate" { after { rate.wrappedValue = true } }
+    }
+
+    static func openAccountExtras(signingOut: Binding<Bool>) {
+        guard isOn, screen == "sign_out" else { return }
+        after { signingOut.wrappedValue = true }
     }
 
     /// Puts quick add in the state the screen shows; true when it did.

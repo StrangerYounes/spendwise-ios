@@ -318,6 +318,26 @@ public final class SyncStore {
         try db.execute("DELETE FROM sync_outbox; DELETE FROM sync_tombstones; DELETE FROM sync_base")
     }
 
+    /// Lists or library items on the phone: what another account would receive on joining.
+    public func hasData() throws -> Bool {
+        try db.scalar("SELECT EXISTS(SELECT 1 FROM shopping_lists) OR EXISTS(SELECT 1 FROM master_items)")?.int64 == 1
+    }
+
+    /// Removes everything the person made from this phone, with nothing recorded, so no account hears
+    /// of it: lists (their items and photos), the library and its prices, stores, reports and
+    /// categories, which start again from the defaults. The settings (currency, theme) stay.
+    public func wipe() throws {
+        try db.transaction {
+            try SyncSchema.setMode(db, SyncSchema.modeOff)
+            for table in ["shopping_items", "photos", "shopping_lists", "store_item_prices", "master_items", "stores", "ai_reports", "categories"] {
+                try db.execute("DELETE FROM \(table)")
+            }
+            try AppDatabase.seedDefaultCategories(db)
+            try SyncSchema.fillMissingUids(db)
+            try clearBookkeeping()
+        }
+    }
+
     /// Forgets everything sync knew (signing out): the rows themselves stay.
     public func reset() throws {
         try db.transaction {
@@ -325,6 +345,26 @@ public final class SyncStore {
             try SyncSchema.setMode(db, SyncSchema.modeOff)
         }
     }
+}
+
+/// Whose data is on this phone (Android sync/DataOwner.kt, FEATURES.md §6.3): the account it last
+/// synced with, kept per install and never synced. Lists made before any sign-in belong to nobody.
+/// A family's lists count as the account that was syncing them, so a different account never
+/// silently receives them either.
+public enum DataOwner {
+    public enum Decision: Equatable {
+        /// Join as before: the same account again, nothing on the phone, or data that belongs to nobody.
+        case merge
+        /// The phone has another account's lists: ask before anything goes up.
+        case ask
+    }
+
+    public static func decide(owner: String?, signingIn: String, hasData: Bool) -> Decision {
+        hasData && owner != nil && owner != signingIn ? .ask : .merge
+    }
+
+    /// The owner recorded once a phone has joined: the account, whether it syncs its own data or a family's.
+    public static func ownerAfterJoining(uid: String, space: String?) -> String { uid }
 }
 
 /// Family invite codes (Android sync/Family.kt's companion).

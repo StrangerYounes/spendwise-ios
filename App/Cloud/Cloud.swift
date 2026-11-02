@@ -55,6 +55,9 @@ final class Cloud {
     var family: Family?
     var busy = false
     var inviteCode: String?
+    /// Signed in to an account while the phone holds another account's lists (FEATURES.md §6.3):
+    /// nothing goes up until the person says what to do with them.
+    var otherAccount: SignedIn?
 
     let ai: AiGateway
     @ObservationIgnored private(set) var sync: CloudSync!
@@ -110,6 +113,8 @@ final class Cloud {
                 }
             }
         }
+        // Installs that synced before the owner was kept: the account they joined
+        if dataOwner == nil, prefs.string(forKey: "sync.joined_account") != nil, let user { setDataOwner(user.uid) }
         watchPlan()
         sync.update()
     }
@@ -304,13 +309,73 @@ final class Cloud {
     /// Why the last call failed, for the test driver's report.
     @ObservationIgnored var lastError: String?
 
-    func signOut() async {
-        try? Auth.auth().signOut()
-        GIDSignIn.sharedInstance.signOut()
+    /// Signs out; [removeLists] also removes everything from the phone (nothing is deleted in the
+    /// account) and the phone's data then belongs to nobody.
+    func signOut(removeLists: Bool = false) async {
+        if Self.configured {
+            try? Auth.auth().signOut()
+            GIDSignIn.sharedInstance.signOut()
+        }
         user = nil
+        otherAccount = nil
         watchPlan()
-        sync.update()
-        model?.show(L("msg_signed_out"))
+        sync?.update()
+        if removeLists, let model {
+            do {
+                try SyncStore(model.database).wipe()
+                setDataOwner(nil)
+            } catch {
+                model.show(UserErrors.message(error, L("err_save")))
+                return
+            }
+        }
+        model?.show(L(removeLists ? "msg_signed_out_removed" : "msg_signed_out"))
+    }
+
+    // MARK: - Whose data is on the phone (Android sync/DataOwner.kt, FEATURES.md §6.3)
+
+    private static let ownerKey = "sync.data_owner"
+
+    /// The account the phone's data belongs to: the one it last synced with (nil: nobody).
+    var dataOwner: String? { prefs.string(forKey: Self.ownerKey) }
+
+    func setDataOwner(_ uid: String?) { prefs.set(uid, forKey: Self.ownerKey) }
+
+    /// Whether signing in as [u] needs the question (another account's lists on the phone).
+    func needsAsking(_ u: SignedIn) -> Bool {
+        let hasData = model.flatMap { try? SyncStore($0.database).hasData() } ?? false
+        return DataOwner.decide(owner: dataOwner, signingIn: u.uid, hasData: hasData) == .ask
+    }
+
+    /// Asked at sign-in on any plan (the plan may change later), and again before a first sync.
+    func askAboutOwnerIfNeeded() {
+        otherAccount = user.flatMap { needsAsking($0) ? $0 : nil }
+    }
+
+    enum OwnerAnswer { case addThem, startFresh, cancel }
+
+    /// Add them: the account takes the phone's lists (joining merges them). Start fresh: the phone's
+    /// lists are removed, then the account's arrive. Cancel: signs out, nothing changed.
+    func answer(_ answer: OwnerAnswer) async {
+        guard let asked = otherAccount else { return }
+        switch answer {
+        case .addThem:
+            setDataOwner(asked.uid)
+        case .startFresh:
+            guard let model else { return }
+            do {
+                try SyncStore(model.database).wipe()
+            } catch {
+                model.show(UserErrors.message(error, L("err_save")))
+                return
+            }
+            setDataOwner(asked.uid)
+        case .cancel:
+            await signOut()
+            return
+        }
+        otherAccount = nil
+        sync?.resume()
     }
 
     /// Erases the account's own cloud copy (users/{uid}, never a family's) and the sign-in itself;

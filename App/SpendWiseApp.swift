@@ -71,6 +71,10 @@ struct RootView: View {
         .environment(\.locale, Lang.formatLocale)
         .preferredColorScheme(model.colorScheme)
         .snackbarHost()
+        // Signed in while the phone holds another account's lists (any screen, FEATURES.md §6.3)
+        .sheet(isPresented: Binding(get: { model.cloud.otherAccount != nil }, set: { _ in })) {
+            if let user = model.cloud.otherAccount { OtherAccountSheet(user: user) }
+        }
         .onAppear {
             guard !prepared else { return }
             prepared = true

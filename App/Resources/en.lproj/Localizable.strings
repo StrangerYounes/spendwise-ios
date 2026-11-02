@@ -324,6 +324,7 @@
 "msg_removed" = "%1$@ is no longer in the family";
 "msg_sign_in_cancelled" = "Sign-in cancelled";
 "msg_signed_out" = "Signed out. Your lists stay on this phone.";
+"msg_signed_out_removed" = "Signed out. The lists were removed from this phone.";
 "n_left" = "%1$ld left";
 "n_of_m_left" = "%1$ld of %2$ld left";
 "name" = "Name";
@@ -361,6 +362,14 @@
 "only_filter" = "Only: %1$@";
 "or_type_it" = "or type it";
 "other" = "Other…";
+"other_account_add" = "Add them to %1$@";
+"other_account_backup" = "Back up first";
+"other_account_body" = "The lists on this phone belong to another account. Add them to %1$@, or start with this account's own lists?";
+"other_account_fresh" = "Start with this account's lists";
+"other_account_fresh_body" = "The lists on this phone are removed, with their items, the item library, stores and reports. Then the lists of %1$@ are loaded. Nothing is deleted from the other account. Back up first if you may want them later.";
+"other_account_fresh_q" = "Remove the lists on this phone?";
+"other_account_remove" = "Remove and continue";
+"other_account_title" = "This phone has lists from another account";
 "pack_not" = "Not a pack";
 "pack_of" = "Pack of %1$ld? Count %1$ld at this price";
 "paid" = "Paid";
@@ -486,7 +495,10 @@
 "sign_in_sub_sync" = "Your lists stay on this phone and also sync to your account. Sign in with the same account on another phone to share them.";
 "sign_out" = "Sign out";
 "sign_out_body" = "Your lists stay on this phone but stop syncing.";
+"sign_out_body_remove" = "Your lists, item library, stores and reports are removed from this phone. What has synced stays in your account.";
+"sign_out_keep" = "Keep lists on this phone";
 "sign_out_q" = "Sign out?";
+"sign_out_remove" = "Remove them from this phone";
 "sign_out_sub" = "Your lists stay on this phone and stop syncing";
 "since_first" = "Since first";
 "skip" = "Skip";

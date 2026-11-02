@@ -19,6 +19,12 @@ public final class AppDatabase {
         ("Miscellaneous", Int32(bitPattern: 0xFF607D8B)),
     ]
 
+    static func seedDefaultCategories(_ db: SQLiteDB) throws {
+        for c in defaultCategories {
+            try db.run("INSERT INTO `categories` (`name`, `color`) VALUES (?, ?)", [c.name, Int64(c.color)])
+        }
+    }
+
     /// The string key that shows a default category in the app's language (nil: shown as named;
     /// a renamed default is an ordinary category).
     public static func defaultCategoryKey(_ name: String) -> String? {
@@ -38,9 +44,7 @@ public final class AppDatabase {
             try db.transaction {
                 for sql in Self.schema { try db.execute(sql) }
                 // Fresh installs start with the default categories (existing installs keep theirs)
-                for c in Self.defaultCategories {
-                    try db.run("INSERT INTO `categories` (`name`, `color`) VALUES (?, ?)", [c.name, Int64(c.color)])
-                }
+                try Self.seedDefaultCategories(db)
             }
             db.userVersion = Self.version
         }
